@@ -80,6 +80,8 @@ export type APIRoutes =
 | { method: 'delete', path: '-/channels/{target}/comments/{comment}/upvote', parts: 5, params: undefined, response: paths['/channels/{target}/comments/{comment}/upvote']['delete']['responses']['200']['content']['application/json'] }
 | { method: 'patch', path: `/channels/${string}/forum`, parts: 3, params: paths['/channels/{target}/forum']['patch']['requestBody']['content']['application/json'], response: paths['/channels/{target}/forum']['patch']['responses']['200']['content']['application/json'] }
 | { method: 'patch', path: '-/channels/{target}/forum', parts: 3, params: paths['/channels/{target}/forum']['patch']['requestBody']['content']['application/json'], response: paths['/channels/{target}/forum']['patch']['responses']['200']['content']['application/json'] }
+| { method: 'post', path: `/channels/${string}/sounds/${string}/play`, parts: 5, params: undefined, response: undefined }
+| { method: 'post', path: '-/channels/{target}/sounds/{sound}/play', parts: 5, params: undefined, response: undefined }
 | { method: 'put', path: `/channels/${string}/posts/${string}/subscribe`, parts: 5, params: undefined, response: paths['/channels/{target}/posts/{post}/subscribe']['put']['responses']['200']['content']['application/json'] }
 | { method: 'put', path: '-/channels/{target}/posts/{post}/subscribe', parts: 5, params: undefined, response: paths['/channels/{target}/posts/{post}/subscribe']['put']['responses']['200']['content']['application/json'] }
 | { method: 'delete', path: `/channels/${string}/posts/${string}/subscribe`, parts: 5, params: undefined, response: paths['/channels/{target}/posts/{post}/subscribe']['delete']['responses']['200']['content']['application/json'] }
@@ -168,6 +170,8 @@ export type APIRoutes =
 | { method: 'put', path: '-/servers/{target}/permissions/default', parts: 4, params: paths['/servers/{target}/permissions/default']['put']['requestBody']['content']['application/json'], response: paths['/servers/{target}/permissions/default']['put']['responses']['200']['content']['application/json'] }
 | { method: 'get', path: `/servers/${string}/emojis`, parts: 3, params: undefined, response: paths['/servers/{target}/emojis']['get']['responses']['200']['content']['application/json'] }
 | { method: 'get', path: '-/servers/{target}/emojis', parts: 3, params: undefined, response: paths['/servers/{target}/emojis']['get']['responses']['200']['content']['application/json'] }
+| { method: 'get', path: `/servers/${string}/sounds`, parts: 3, params: undefined, response: paths['/servers/{target}/sounds']['get']['responses']['200']['content']['application/json'] }
+| { method: 'get', path: '-/servers/{target}/sounds', parts: 3, params: undefined, response: paths['/servers/{target}/sounds']['get']['responses']['200']['content']['application/json'] }
 | { method: 'patch', path: `/servers/${string}/roles/ranks`, parts: 4, params: paths['/servers/{target}/roles/ranks']['patch']['requestBody']['content']['application/json'], response: paths['/servers/{target}/roles/ranks']['patch']['responses']['200']['content']['application/json'] }
 | { method: 'patch', path: '-/servers/{target}/roles/ranks', parts: 4, params: paths['/servers/{target}/roles/ranks']['patch']['requestBody']['content']['application/json'], response: paths['/servers/{target}/roles/ranks']['patch']['responses']['200']['content']['application/json'] }
 | { method: 'get', path: `/servers/${string}/audit_logs`, parts: 3, params: paths['/servers/{target}/audit_logs']['get']['parameters']['query'], response: paths['/servers/{target}/audit_logs']['get']['responses']['200']['content']['application/json'] }
@@ -186,6 +190,14 @@ export type APIRoutes =
 | { method: 'delete', path: '-/custom/emoji/{emoji_id}', parts: 3, params: undefined, response: undefined }
 | { method: 'patch', path: `/custom/emoji/${string}`, parts: 3, params: paths['/custom/emoji/{emoji_id}']['patch']['requestBody']['content']['application/json'], response: paths['/custom/emoji/{emoji_id}']['patch']['responses']['200']['content']['application/json'] }
 | { method: 'patch', path: '-/custom/emoji/{emoji_id}', parts: 3, params: paths['/custom/emoji/{emoji_id}']['patch']['requestBody']['content']['application/json'], response: paths['/custom/emoji/{emoji_id}']['patch']['responses']['200']['content']['application/json'] }
+| { method: 'get', path: `/custom/sound/${string}`, parts: 3, params: undefined, response: paths['/custom/sound/{sound_id}']['get']['responses']['200']['content']['application/json'] }
+| { method: 'get', path: '-/custom/sound/{sound_id}', parts: 3, params: undefined, response: paths['/custom/sound/{sound_id}']['get']['responses']['200']['content']['application/json'] }
+| { method: 'put', path: `/custom/sound/${string}`, parts: 3, params: paths['/custom/sound/{sound_id}']['put']['requestBody']['content']['application/json'], response: paths['/custom/sound/{sound_id}']['put']['responses']['200']['content']['application/json'] }
+| { method: 'put', path: '-/custom/sound/{sound_id}', parts: 3, params: paths['/custom/sound/{sound_id}']['put']['requestBody']['content']['application/json'], response: paths['/custom/sound/{sound_id}']['put']['responses']['200']['content']['application/json'] }
+| { method: 'delete', path: `/custom/sound/${string}`, parts: 3, params: undefined, response: undefined }
+| { method: 'delete', path: '-/custom/sound/{sound_id}', parts: 3, params: undefined, response: undefined }
+| { method: 'patch', path: `/custom/sound/${string}`, parts: 3, params: paths['/custom/sound/{sound_id}']['patch']['requestBody']['content']['application/json'], response: paths['/custom/sound/{sound_id}']['patch']['responses']['200']['content']['application/json'] }
+| { method: 'patch', path: '-/custom/sound/{sound_id}', parts: 3, params: paths['/custom/sound/{sound_id}']['patch']['requestBody']['content']['application/json'], response: paths['/custom/sound/{sound_id}']['patch']['responses']['200']['content']['application/json'] }
 | { method: 'post', path: `/safety/report`, parts: 2, params: paths['/safety/report']['post']['requestBody']['content']['application/json'], response: undefined }
 | { method: 'post', path: `/auth/account/create`, parts: 3, params: paths['/auth/account/create']['post']['requestBody']['content']['application/json'], response: undefined }
 | { method: 'post', path: `/auth/account/reverify`, parts: 3, params: paths['/auth/account/reverify']['post']['requestBody']['content']['application/json'], response: undefined }

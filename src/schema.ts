@@ -172,6 +172,14 @@ export interface paths {
      */
     patch: operations["forum_settings_edit_forum_settings"];
   };
+  "/channels/{target}/sounds/{sound}/play": {
+    /**
+     * Tell everyone in the channel that a sound is playing.
+     *
+     * The audio itself travels as a LiveKit track published by the player; this only carries the "who played what" label. It cannot go over LiveKit because the token sets `can_publish_data = false` and voice-ingress disconnects any participant that publishes data.
+     */
+    post: operations["sound_play_play_sound"];
+  };
   "/channels/{target}/posts/{post}/subscribe": {
     /** Follow a post to keep track of it. */
     put: operations["forum_post_subscribe_subscribe_forum_post"];
@@ -343,6 +351,10 @@ export interface paths {
     /** Fetch all emoji on a server. */
     get: operations["emoji_list_list_emoji"];
   };
+  "/servers/{target}/sounds": {
+    /** Fetch all soundboard sounds on a server. */
+    get: operations["sound_list_list_sounds"];
+  };
   "/servers/{target}/roles/ranks": {
     /** Edit's server role's ranks. */
     patch: operations["roles_edit_positions_edit_role_ranks"];
@@ -368,6 +380,16 @@ export interface paths {
     delete: operations["emoji_delete_delete_emoji"];
     /** Edit an emoji by its id. */
     patch: operations["emoji_edit_edit_emoji"];
+  };
+  "/custom/sound/{sound_id}": {
+    /** Fetch a sound by its id. */
+    get: operations["sound_edit_fetch_sound"];
+    /** Create a soundboard sound by its Autumn upload id. */
+    put: operations["sound_create_create_sound"];
+    /** Delete a sound by its id. */
+    delete: operations["sound_edit_delete_sound"];
+    /** Rename a sound or move it to another category. */
+    patch: operations["sound_edit_edit_sound"];
   };
   "/safety/report": {
     /** Report a piece of content to the moderation team. */
@@ -631,6 +653,8 @@ export interface components {
        * @description max server emoji
        */
       server_emoji: number;
+      /** Format: int64 */
+      server_sounds: number;
       /**
        * Format: int64
        * @description max server roles
@@ -881,6 +905,12 @@ export interface components {
       | {
           /** @enum {string} */
           type: "TooManyEmoji";
+          /** Format: uint */
+          max: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "TooManySounds";
           /** Format: uint */
           max: number;
         }
@@ -2869,6 +2899,35 @@ export interface components {
           /** @enum {string} */
           type: "Detached";
         };
+    /** @description Soundboard sound */
+    Sound: {
+      /** @description Unique Id */
+      _id: string;
+      /** @description What owns this sound */
+      parent: components["schemas"]["SoundParent"];
+      /** @description Uploader user id */
+      creator_id: string;
+      /** @description Sound name */
+      name: string;
+      /** @description Free-form category, defined by whoever uploads */
+      category?: string | null;
+      /**
+       * Format: uint32
+       * @description Duration in milliseconds
+       */
+      duration?: number | null;
+    };
+    /** @description Parent Id of the sound */
+    SoundParent:
+      | {
+          /** @enum {string} */
+          type: "Server";
+          id: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "Detached";
+        };
     /** @description New role positions */
     DataEditRoleRanks: {
       ranks: string[];
@@ -3203,6 +3262,31 @@ export interface components {
     DataEditEmoji: {
       /** @description Emoji name */
       name?: string | null;
+    };
+    /** @description Create a new sound */
+    DataCreateSound: {
+      /**
+       * @description Sound name
+       *
+       * Unlike emoji this is free text: a sound is picked by reading it in a list, not typed inline in a message, so there is no reason to restrict it to an identifier-like shape.
+       */
+      name: string;
+      /** @description Parent information */
+      parent: components["schemas"]["SoundParent"];
+      /** @description Category to file it under */
+      category?: string | null;
+      /**
+       * Format: uint32
+       * @description Duration in milliseconds, as measured by the uploader
+       */
+      duration?: number | null;
+    };
+    /** @description Edit sound information */
+    DataEditSound: {
+      /** @description Sound name */
+      name?: string | null;
+      /** @description Category to file it under */
+      category?: string | null;
     };
     /** Report Data */
     DataReportContent: {
@@ -4489,6 +4573,29 @@ export interface operations {
       };
     };
   };
+  /**
+   * Tell everyone in the channel that a sound is playing.
+   *
+   * The audio itself travels as a LiveKit track published by the player; this only carries the "who played what" label. It cannot go over LiveKit because the token sets `can_publish_data = false` and voice-ingress disconnects any participant that publishes data.
+   */
+  sound_play_play_sound: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        sound: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
   /** Follow a post to keep track of it. */
   forum_post_subscribe_subscribe_forum_post: {
     parameters: {
@@ -5640,6 +5747,27 @@ export interface operations {
       };
     };
   };
+  /** Fetch all soundboard sounds on a server. */
+  sound_list_list_sounds: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"][];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
   /** Edit's server role's ranks. */
   roles_edit_positions_edit_role_ranks: {
     parameters: {
@@ -5869,6 +5997,97 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["DataEditEmoji"];
+      };
+    };
+  };
+  /** Fetch a sound by its id. */
+  sound_edit_fetch_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Create a soundboard sound by its Autumn upload id. */
+  sound_create_create_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataCreateSound"];
+      };
+    };
+  };
+  /** Delete a sound by its id. */
+  sound_edit_delete_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Rename a sound or move it to another category. */
+  sound_edit_edit_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataEditSound"];
       };
     };
   };

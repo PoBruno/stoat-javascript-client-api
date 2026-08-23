@@ -2193,6 +2193,54 @@
         ]
       }
     },
+    "/channels/{target}/sounds/{sound}/play": {
+      "post": {
+        "tags": [
+          "Soundboard"
+        ],
+        "summary": "Announce Soundboard Play",
+        "description": "Tell everyone in the channel that a sound is playing.\n\nThe audio itself travels as a LiveKit track published by the player; this only carries the \"who played what\" label. It cannot go over LiveKit because the token sets `can_publish_data = false` and voice-ingress disconnects any participant that publishes data.",
+        "operationId": "sound_play_play_sound",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "sound",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
     "/channels/{target}/posts/{post}/subscribe": {
       "put": {
         "tags": [
@@ -4843,6 +4891,56 @@
         ]
       }
     },
+    "/servers/{target}/sounds": {
+      "get": {
+        "tags": [
+          "Server Customisation"
+        ],
+        "summary": "Fetch Server Sounds",
+        "description": "Fetch all soundboard sounds on a server.",
+        "operationId": "sound_list_list_sounds",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Sound"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
     "/servers/{target}/roles/ranks": {
       "patch": {
         "tags": [
@@ -5364,6 +5462,196 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Emoji"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/custom/sound/{sound_id}": {
+      "get": {
+        "tags": [
+          "Soundboard"
+        ],
+        "summary": "Fetch Sound",
+        "description": "Fetch a sound by its id.",
+        "operationId": "sound_edit_fetch_sound",
+        "parameters": [
+          {
+            "name": "sound_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Soundboard"
+        ],
+        "summary": "Create New Sound",
+        "description": "Create a soundboard sound by its Autumn upload id.",
+        "operationId": "sound_create_create_sound",
+        "parameters": [
+          {
+            "name": "sound_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataCreateSound"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sound"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Soundboard"
+        ],
+        "summary": "Delete Sound",
+        "description": "Delete a sound by its id.",
+        "operationId": "sound_edit_delete_sound",
+        "parameters": [
+          {
+            "name": "sound_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Soundboard"
+        ],
+        "summary": "Edit Sound",
+        "description": "Rename a sound or move it to another category.",
+        "operationId": "sound_edit_edit_sound",
+        "parameters": [
+          {
+            "name": "sound_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataEditSound"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sound"
                 }
               }
             }
@@ -7515,7 +7803,8 @@
           "restrict_server_creation",
           "server_channels",
           "server_emoji",
-          "server_roles"
+          "server_roles",
+          "server_sounds"
         ],
         "properties": {
           "group_size": {
@@ -7540,6 +7829,10 @@
           },
           "server_emoji": {
             "description": "max server emoji",
+            "type": "integer",
+            "format": "int64"
+          },
+          "server_sounds": {
             "type": "integer",
             "format": "int64"
           },
@@ -8276,6 +8569,26 @@
                 "type": "string",
                 "enum": [
                   "TooManyEmoji"
+                ]
+              },
+              "max": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "max",
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "TooManySounds"
                 ]
               },
               "max": {
@@ -13787,6 +14100,87 @@
           }
         ]
       },
+      "Sound": {
+        "description": "Soundboard sound",
+        "type": "object",
+        "required": [
+          "_id",
+          "creator_id",
+          "name",
+          "parent"
+        ],
+        "properties": {
+          "_id": {
+            "description": "Unique Id",
+            "type": "string"
+          },
+          "parent": {
+            "description": "What owns this sound",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SoundParent"
+              }
+            ]
+          },
+          "creator_id": {
+            "description": "Uploader user id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Sound name",
+            "type": "string"
+          },
+          "category": {
+            "description": "Free-form category, defined by whoever uploads",
+            "type": "string",
+            "nullable": true
+          },
+          "duration": {
+            "description": "Duration in milliseconds",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "SoundParent": {
+        "description": "Parent Id of the sound",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "id",
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "Server"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "Detached"
+                ]
+              }
+            }
+          }
+        ]
+      },
       "DataEditRoleRanks": {
         "description": "New role positions",
         "type": "object",
@@ -14979,6 +15373,64 @@
             "maxLength": 32,
             "minLength": 1,
             "pattern": "^[a-z0-9_]+$",
+            "nullable": true
+          }
+        }
+      },
+      "DataCreateSound": {
+        "description": "Create a new sound",
+        "type": "object",
+        "required": [
+          "name",
+          "parent"
+        ],
+        "properties": {
+          "name": {
+            "description": "Sound name\n\nUnlike emoji this is free text: a sound is picked by reading it in a list, not typed inline in a message, so there is no reason to restrict it to an identifier-like shape.",
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1
+          },
+          "parent": {
+            "description": "Parent information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SoundParent"
+              }
+            ]
+          },
+          "category": {
+            "description": "Category to file it under",
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "nullable": true
+          },
+          "duration": {
+            "description": "Duration in milliseconds, as measured by the uploader",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0,
+            "nullable": true
+          }
+        }
+      },
+      "DataEditSound": {
+        "description": "Edit sound information",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Sound name",
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "nullable": true
+          },
+          "category": {
+            "description": "Category to file it under",
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
             "nullable": true
           }
         }
