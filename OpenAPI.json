@@ -1372,6 +1372,934 @@
         ]
       }
     },
+    "/channels/{target}/posts": {
+      "get": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Fetch Forum Posts",
+        "description": "Fetch a page of posts from a forum channel.",
+        "operationId": "forum_post_query_query_forum_posts",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "How to order the feed; defaults to the channel's configured sort",
+            "schema": {
+              "description": "How to order the feed; defaults to the channel's configured sort",
+              "$ref": "#/components/schemas/ForumSort",
+              "nullable": true
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Only return posts carrying this tag",
+            "schema": {
+              "description": "Only return posts carrying this tag",
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of posts to return",
+            "schema": {
+              "description": "Maximum number of posts to return",
+              "type": "integer",
+              "format": "int64",
+              "maximum": 100.0,
+              "minimum": 1.0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Return posts that come after this one in the current ordering",
+            "schema": {
+              "description": "Return posts that come after this one in the current ordering",
+              "type": "string",
+              "maxLength": 26,
+              "minLength": 26,
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPostsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Create Forum Post",
+        "description": "Create a new post in a forum channel.",
+        "operationId": "forum_post_create_create_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataCreateForumPost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/posts/{post}": {
+      "get": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Fetch Forum Post",
+        "description": "Fetch a single post by id.",
+        "operationId": "forum_post_fetch_fetch_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Delete Forum Post",
+        "description": "Delete a post. The author may delete their own; anyone else needs `ManageMessages`.",
+        "operationId": "forum_post_edit_delete_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Edit Forum Post",
+        "description": "Edit a post, or moderate it by pinning / locking.\n\nEditing the body requires being the author. Pinning and locking require `ManageMessages`.",
+        "operationId": "forum_post_edit_edit_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataEditForumPost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/posts/{post}/upvote": {
+      "put": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Upvote Forum Post",
+        "description": "Add the current user's upvote. Idempotent: voting twice is a no-op.",
+        "operationId": "forum_post_vote_upvote_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Remove Forum Post Upvote",
+        "description": "Withdraw the current user's upvote. Idempotent.",
+        "operationId": "forum_post_vote_remove_forum_post_upvote",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/posts/{post}/comments": {
+      "get": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Fetch Forum Comments",
+        "description": "Fetch every comment on a post, flat. The client assembles the tree.",
+        "operationId": "forum_comment_create_query_forum_comments",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "How to order the thread",
+            "schema": {
+              "description": "How to order the thread",
+              "$ref": "#/components/schemas/ForumCommentSort",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumCommentsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Create Forum Comment",
+        "description": "Comment on a post, optionally replying to another comment.",
+        "operationId": "forum_comment_create_create_forum_comment",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataCreateForumComment"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumComment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/comments/{comment}": {
+      "delete": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Delete Forum Comment",
+        "description": "Delete a comment. The author may delete their own; anyone else needs `ManageMessages`.\n\nA comment that has replies is tombstoned rather than removed, so the subtree below it is not orphaned.",
+        "operationId": "forum_comment_edit_delete_forum_comment",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "comment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Edit Forum Comment",
+        "description": "Edit a comment. Only the author may change the body.",
+        "operationId": "forum_comment_edit_edit_forum_comment",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "comment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataEditForumComment"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumComment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/comments/{comment}/upvote": {
+      "put": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Upvote Forum Comment",
+        "operationId": "forum_comment_edit_upvote_forum_comment",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "comment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumComment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Remove Forum Comment Upvote",
+        "operationId": "forum_comment_edit_remove_forum_comment_upvote",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "comment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumComment"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/forum": {
+      "patch": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Edit Forum Settings",
+        "description": "Configure the tags a forum offers, its default ordering, and whether a post must carry a tag.\n\nKept off `PATCH /channels/<id>` so the generic channel edit does not have to know about forum-only fields.",
+        "operationId": "forum_settings_edit_forum_settings",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataEditForumChannel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Channel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/channels/{target}/posts/{post}/subscribe": {
+      "put": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Follow Forum Post",
+        "description": "Follow a post to keep track of it.",
+        "operationId": "forum_post_subscribe_subscribe_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Forum"
+        ],
+        "summary": "Unfollow Forum Post",
+        "operationId": "forum_post_subscribe_unsubscribe_forum_post",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "post",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
     "/channels/{target}/messages": {
       "get": {
         "tags": [
@@ -9044,6 +9972,81 @@
                 "nullable": true
               }
             }
+          },
+          {
+            "description": "Forum channel belonging to a server\n\nUnlike a text channel this has no message stream: content lives in `forum_posts` / `forum_comments`.",
+            "type": "object",
+            "required": [
+              "_id",
+              "channel_type",
+              "name",
+              "server"
+            ],
+            "properties": {
+              "channel_type": {
+                "type": "string",
+                "enum": [
+                  "ForumChannel"
+                ]
+              },
+              "_id": {
+                "description": "Unique Id",
+                "type": "string"
+              },
+              "server": {
+                "description": "Id of the server this channel belongs to",
+                "type": "string"
+              },
+              "name": {
+                "description": "Display name of the channel",
+                "type": "string"
+              },
+              "description": {
+                "description": "Channel description",
+                "type": "string",
+                "nullable": true
+              },
+              "icon": {
+                "description": "Custom icon attachment",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/File"
+                  }
+                ],
+                "nullable": true
+              },
+              "default_permissions": {
+                "description": "Default permissions assigned to users in this channel",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/OverrideField"
+                  }
+                ],
+                "nullable": true
+              },
+              "role_permissions": {
+                "description": "Permissions assigned based on role to this channel",
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/OverrideField"
+                }
+              },
+              "nsfw": {
+                "description": "Whether this channel is marked as not safe for work",
+                "type": "boolean"
+              },
+              "forum": {
+                "description": "Forum specific configuration",
+                "default": {
+                  "default_sort": "Hot"
+                },
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ForumInformation"
+                  }
+                ]
+              }
+            }
           }
         ]
       },
@@ -9076,6 +10079,93 @@
             "type": "integer",
             "format": "uint",
             "minimum": 1.0,
+            "nullable": true
+          }
+        }
+      },
+      "ForumInformation": {
+        "description": "Configuration for a forum channel",
+        "type": "object",
+        "properties": {
+          "default_sort": {
+            "description": "How posts are ordered by default",
+            "default": "Hot",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ForumSort"
+              }
+            ]
+          },
+          "available_tags": {
+            "description": "Tags a post may be labelled with",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForumTag"
+            }
+          },
+          "require_tag": {
+            "description": "Whether a post must carry at least one tag",
+            "type": "boolean"
+          },
+          "last_activity_id": {
+            "description": "Id of the most recently created post",
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ForumSort": {
+        "description": "How forum posts are ordered",
+        "oneOf": [
+          {
+            "description": "Score decayed by age",
+            "type": "string",
+            "enum": [
+              "Hot"
+            ]
+          },
+          {
+            "description": "Most recently created",
+            "type": "string",
+            "enum": [
+              "New"
+            ]
+          },
+          {
+            "description": "Highest score",
+            "type": "string",
+            "enum": [
+              "Top"
+            ]
+          },
+          {
+            "description": "Most recently commented on",
+            "type": "string",
+            "enum": [
+              "Active"
+            ]
+          }
+        ]
+      },
+      "ForumTag": {
+        "description": "A tag that can be applied to forum posts",
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "description": "Unique Id within the channel",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name",
+            "type": "string"
+          },
+          "colour": {
+            "description": "Colour, as a CSS colour string",
+            "type": "string",
             "nullable": true
           }
         }
@@ -9555,6 +10645,571 @@
           }
         ]
       },
+      "ForumPost": {
+        "description": "A post in a forum channel\n\nUnlike a message, a post carries a title and its own vote/comment counters so feeds can be ordered without touching the message stream.",
+        "type": "object",
+        "required": [
+          "_id",
+          "author",
+          "channel",
+          "server",
+          "title"
+        ],
+        "properties": {
+          "_id": {
+            "description": "Unique Id",
+            "type": "string"
+          },
+          "channel": {
+            "description": "Id of the forum channel this post belongs to",
+            "type": "string"
+          },
+          "server": {
+            "description": "Id of the server the channel belongs to",
+            "type": "string"
+          },
+          "author": {
+            "description": "Id of the user who created this post",
+            "type": "string"
+          },
+          "title": {
+            "description": "Post title",
+            "type": "string"
+          },
+          "content": {
+            "description": "Post body, markdown",
+            "type": "string",
+            "nullable": true
+          },
+          "attachments": {
+            "description": "Attached files",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/File"
+            },
+            "nullable": true
+          },
+          "tags": {
+            "description": "Ids of tags applied to this post, from the channel's available tags",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "upvoters": {
+            "description": "Ids of users who upvoted\n\nBounded by the size of the instance, which is why it is embedded rather than living in its own collection.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "score": {
+            "description": "Number of upvotes; kept in sync with `upvoters` so feeds can sort",
+            "default": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment_count": {
+            "description": "Number of comments",
+            "default": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "views": {
+            "description": "How many distinct people opened this post\n\nA count, not the list: who read what is nobody else's business.",
+            "default": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "subscribers": {
+            "description": "Ids of users following this post",
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "last_comment_at": {
+            "description": "When the most recent comment was posted",
+            "type": "string",
+            "nullable": true
+          },
+          "pinned": {
+            "description": "Whether this post is pinned to the top of the feed",
+            "type": "boolean"
+          },
+          "locked": {
+            "description": "Whether this post is closed to new comments",
+            "type": "boolean"
+          },
+          "edited": {
+            "description": "When this post was last edited",
+            "type": "string",
+            "nullable": true
+          },
+          "deleted_by": {
+            "description": "Id of whoever deleted this post\n\nCompare against `author` to tell \"author deleted\" from \"moderator removed\". A deleted post is kept as a tombstone while it has comments.",
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DataCreateForumPost": {
+        "description": "Create a forum post",
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "description": "Post title",
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1
+          },
+          "content": {
+            "description": "Post body",
+            "type": "string",
+            "maxLength": 8000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "attachments": {
+            "description": "Ids of attachments",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "tags": {
+            "description": "Tag ids, must exist on the channel",
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ForumPostsResponse": {
+        "description": "Response when fetching a forum feed",
+        "type": "object",
+        "required": [
+          "posts",
+          "users"
+        ],
+        "properties": {
+          "posts": {
+            "description": "The posts, in the requested order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForumPost"
+            }
+          },
+          "users": {
+            "description": "Authors of the posts",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "members": {
+            "description": "Server members for the authors",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Member"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "Member": {
+        "description": "Server Member",
+        "type": "object",
+        "required": [
+          "_id",
+          "joined_at"
+        ],
+        "properties": {
+          "_id": {
+            "description": "Unique member id",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberCompositeKey"
+              }
+            ]
+          },
+          "joined_at": {
+            "description": "Time at which this user joined the server",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
+              }
+            ]
+          },
+          "nickname": {
+            "description": "Member's nickname",
+            "type": "string",
+            "nullable": true
+          },
+          "pronouns": {
+            "description": "Member's pronouns",
+            "type": "string",
+            "nullable": true
+          },
+          "avatar": {
+            "description": "Avatar attachment",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/File"
+              }
+            ],
+            "nullable": true
+          },
+          "roles": {
+            "description": "Member's roles",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "description": "Timestamp this member is timed out until",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
+              }
+            ],
+            "nullable": true
+          },
+          "can_publish": {
+            "description": "Whether the member is server-wide voice muted",
+            "type": "boolean"
+          },
+          "can_receive": {
+            "description": "Whether the member is server-wide voice deafened",
+            "type": "boolean"
+          }
+        }
+      },
+      "MemberCompositeKey": {
+        "description": "Composite primary key consisting of server and user id",
+        "type": "object",
+        "required": [
+          "server",
+          "user"
+        ],
+        "properties": {
+          "server": {
+            "description": "Server Id",
+            "type": "string"
+          },
+          "user": {
+            "description": "User Id",
+            "type": "string"
+          }
+        }
+      },
+      "ISO8601 Timestamp": {
+        "description": "ISO8601 formatted timestamp",
+        "type": "string",
+        "format": "date-time",
+        "example": "1970-01-01T00:00:00Z"
+      },
+      "DataEditForumPost": {
+        "description": "Edit a forum post",
+        "type": "object",
+        "properties": {
+          "title": {
+            "description": "Post title",
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true
+          },
+          "content": {
+            "description": "Post body",
+            "type": "string",
+            "maxLength": 8000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "tags": {
+            "description": "Tag ids",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "attachments": {
+            "description": "Attachment ids to add\n\nAppends: editing to paste an image must not drop what was already attached.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "pinned": {
+            "description": "Whether the post is pinned",
+            "type": "boolean",
+            "nullable": true
+          },
+          "locked": {
+            "description": "Whether the post is locked",
+            "type": "boolean",
+            "nullable": true
+          },
+          "remove": {
+            "description": "Fields to remove",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldsForumPost"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "FieldsForumPost": {
+        "description": "Fields that can be removed from a forum post",
+        "type": "string",
+        "enum": [
+          "Content",
+          "Attachments"
+        ]
+      },
+      "ForumComment": {
+        "description": "A comment on a forum post",
+        "type": "object",
+        "required": [
+          "_id",
+          "author",
+          "channel",
+          "content",
+          "post"
+        ],
+        "properties": {
+          "_id": {
+            "description": "Unique Id",
+            "type": "string"
+          },
+          "post": {
+            "description": "Id of the post this comment belongs to",
+            "type": "string"
+          },
+          "channel": {
+            "description": "Id of the forum channel",
+            "type": "string"
+          },
+          "author": {
+            "description": "Id of the user who wrote this comment",
+            "type": "string"
+          },
+          "content": {
+            "description": "Comment body, markdown",
+            "type": "string"
+          },
+          "attachments": {
+            "description": "Attached files",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/File"
+            },
+            "nullable": true
+          },
+          "parent": {
+            "description": "Id of the comment being replied to",
+            "type": "string",
+            "nullable": true
+          },
+          "ancestors": {
+            "description": "Ids from the root down to the parent",
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "upvoters": {
+            "description": "Ids of users who upvoted",
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "score": {
+            "description": "Number of upvotes",
+            "default": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "edited": {
+            "description": "When this comment was last edited",
+            "type": "string",
+            "nullable": true
+          },
+          "deleted_by": {
+            "description": "Id of whoever deleted this comment",
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DataCreateForumComment": {
+        "description": "Create a comment on a forum post",
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "description": "Comment body",
+            "type": "string",
+            "maxLength": 8000,
+            "minLength": 1
+          },
+          "parent": {
+            "description": "Id of the comment being replied to; omit for a top level comment",
+            "type": "string",
+            "maxLength": 26,
+            "minLength": 26,
+            "nullable": true
+          },
+          "attachments": {
+            "description": "Attachment ids",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "ForumCommentsResponse": {
+        "description": "Response when fetching a comment thread",
+        "type": "object",
+        "required": [
+          "comments",
+          "users"
+        ],
+        "properties": {
+          "comments": {
+            "description": "Every comment on the post, flat. The client assembles the tree from `ancestors`.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForumComment"
+            }
+          },
+          "users": {
+            "description": "Authors of the comments",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "members": {
+            "description": "Server members for the authors",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Member"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "ForumCommentSort": {
+        "description": "How a comment thread is ordered",
+        "oneOf": [
+          {
+            "description": "Highest score first",
+            "type": "string",
+            "enum": [
+              "Top"
+            ]
+          },
+          {
+            "description": "Oldest first",
+            "type": "string",
+            "enum": [
+              "Old"
+            ]
+          },
+          {
+            "description": "Newest first",
+            "type": "string",
+            "enum": [
+              "New"
+            ]
+          }
+        ]
+      },
+      "DataEditForumComment": {
+        "description": "Edit a forum comment",
+        "type": "object",
+        "properties": {
+          "content": {
+            "description": "Comment body",
+            "type": "string",
+            "maxLength": 8000,
+            "minLength": 1,
+            "nullable": true
+          },
+          "attachments": {
+            "description": "Attachment ids to add",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "remove": {
+            "description": "Fields to remove",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldsForumComment"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "FieldsForumComment": {
+        "description": "Fields that can be removed from a forum comment",
+        "type": "string",
+        "enum": [
+          "Attachments"
+        ]
+      },
+      "DataEditForumChannel": {
+        "description": "Edit the configuration of a forum channel",
+        "type": "object",
+        "properties": {
+          "available_tags": {
+            "description": "Tags a post may carry",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForumTag"
+            },
+            "maxItems": 32,
+            "nullable": true
+          },
+          "default_sort": {
+            "description": "Default ordering of the feed",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ForumSort"
+              }
+            ],
+            "nullable": true
+          },
+          "require_tag": {
+            "description": "Whether a post must carry at least one tag",
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
       "Message": {
         "description": "Message",
         "type": "object",
@@ -9711,99 +11366,6 @@
             "minimum": 0.0
           }
         }
-      },
-      "Member": {
-        "description": "Server Member",
-        "type": "object",
-        "required": [
-          "_id",
-          "joined_at"
-        ],
-        "properties": {
-          "_id": {
-            "description": "Unique member id",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MemberCompositeKey"
-              }
-            ]
-          },
-          "joined_at": {
-            "description": "Time at which this user joined the server",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ISO8601 Timestamp"
-              }
-            ]
-          },
-          "nickname": {
-            "description": "Member's nickname",
-            "type": "string",
-            "nullable": true
-          },
-          "pronouns": {
-            "description": "Member's pronouns",
-            "type": "string",
-            "nullable": true
-          },
-          "avatar": {
-            "description": "Avatar attachment",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/File"
-              }
-            ],
-            "nullable": true
-          },
-          "roles": {
-            "description": "Member's roles",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "timeout": {
-            "description": "Timestamp this member is timed out until",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ISO8601 Timestamp"
-              }
-            ],
-            "nullable": true
-          },
-          "can_publish": {
-            "description": "Whether the member is server-wide voice muted",
-            "type": "boolean"
-          },
-          "can_receive": {
-            "description": "Whether the member is server-wide voice deafened",
-            "type": "boolean"
-          }
-        }
-      },
-      "MemberCompositeKey": {
-        "description": "Composite primary key consisting of server and user id",
-        "type": "object",
-        "required": [
-          "server",
-          "user"
-        ],
-        "properties": {
-          "server": {
-            "description": "Server Id",
-            "type": "string"
-          },
-          "user": {
-            "description": "User Id",
-            "type": "string"
-          }
-        }
-      },
-      "ISO8601 Timestamp": {
-        "description": "ISO8601 formatted timestamp",
-        "type": "string",
-        "format": "date-time",
-        "example": "1970-01-01T00:00:00Z"
       },
       "MessageWebhook": {
         "description": "Information about the webhook bundled with Message",
@@ -11756,6 +13318,13 @@
             "enum": [
               "Voice"
             ]
+          },
+          {
+            "description": "Forum Channel",
+            "type": "string",
+            "enum": [
+              "Forum"
+            ]
           }
         ]
       },
@@ -12940,6 +14509,15 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0.0,
+            "nullable": true
+          },
+          "forum": {
+            "description": "Forum specific configuration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ForumInformation"
+              }
+            ],
             "nullable": true
           }
         }
@@ -14407,6 +15985,7 @@
         "Channel Invites",
         "Channel Permissions",
         "Messaging",
+        "Forum",
         "Interactions",
         "Groups",
         "Voice",
