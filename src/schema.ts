@@ -128,6 +128,71 @@ export interface paths {
      */
     post: operations["invite_create_create_invite"];
   };
+  "/channels/{target}/posts": {
+    /** Fetch a page of posts from a forum channel. */
+    get: operations["forum_post_query_query_forum_posts"];
+    /** Create a new post in a forum channel. */
+    post: operations["forum_post_create_create_forum_post"];
+  };
+  "/channels/{target}/posts/{post}": {
+    /** Fetch a single post by id. */
+    get: operations["forum_post_fetch_fetch_forum_post"];
+    /** Delete a post. The author may delete their own; anyone else needs `ManageMessages`. */
+    delete: operations["forum_post_edit_delete_forum_post"];
+    /**
+     * Edit a post, or moderate it by pinning / locking.
+     *
+     * Editing the body requires being the author. Pinning and locking require `ManageMessages`.
+     */
+    patch: operations["forum_post_edit_edit_forum_post"];
+  };
+  "/channels/{target}/posts/{post}/upvote": {
+    /** Add the current user's upvote. Idempotent: voting twice is a no-op. */
+    put: operations["forum_post_vote_upvote_forum_post"];
+    /** Withdraw the current user's upvote. Idempotent. */
+    delete: operations["forum_post_vote_remove_forum_post_upvote"];
+  };
+  "/channels/{target}/posts/{post}/comments": {
+    /** Fetch every comment on a post, flat. The client assembles the tree. */
+    get: operations["forum_comment_create_query_forum_comments"];
+    /** Comment on a post, optionally replying to another comment. */
+    post: operations["forum_comment_create_create_forum_comment"];
+  };
+  "/channels/{target}/comments/{comment}": {
+    /**
+     * Delete a comment. The author may delete their own; anyone else needs `ManageMessages`.
+     *
+     * A comment that has replies is tombstoned rather than removed, so the subtree below it is not orphaned.
+     */
+    delete: operations["forum_comment_edit_delete_forum_comment"];
+    /** Edit a comment. Only the author may change the body. */
+    patch: operations["forum_comment_edit_edit_forum_comment"];
+  };
+  "/channels/{target}/comments/{comment}/upvote": {
+    put: operations["forum_comment_edit_upvote_forum_comment"];
+    delete: operations["forum_comment_edit_remove_forum_comment_upvote"];
+  };
+  "/channels/{target}/forum": {
+    /**
+     * Configure the tags a forum offers, its default ordering, and whether a post must carry a tag.
+     *
+     * Kept off `PATCH /channels/<id>` so the generic channel edit does not have to know about forum-only fields.
+     */
+    patch: operations["forum_settings_edit_forum_settings"];
+  };
+  "/channels/{target}/sounds/{sound}/play": {
+    /**
+     * Tell everyone in the channel that a sound is playing.
+     *
+     * The audio itself travels as a LiveKit track published by the player; this only carries the "who played what" label. It cannot go over LiveKit because the token sets `can_publish_data = false` and voice-ingress disconnects any participant that publishes data.
+     */
+    post: operations["sound_play_play_sound"];
+  };
+  "/channels/{target}/posts/{post}/subscribe": {
+    /** Follow a post to keep track of it. */
+    put: operations["forum_post_subscribe_subscribe_forum_post"];
+    delete: operations["forum_post_subscribe_unsubscribe_forum_post"];
+  };
   "/channels/{target}/messages": {
     /** Fetch multiple messages. */
     get: operations["message_query_query"];
@@ -294,6 +359,10 @@ export interface paths {
     /** Fetch all emoji on a server. */
     get: operations["emoji_list_list_emoji"];
   };
+  "/servers/{target}/sounds": {
+    /** Fetch all soundboard sounds on a server. */
+    get: operations["sound_list_list_sounds"];
+  };
   "/servers/{target}/roles/ranks": {
     /** Edit's server role's ranks. */
     patch: operations["roles_edit_positions_edit_role_ranks"];
@@ -327,6 +396,16 @@ export interface paths {
     delete: operations["emoji_delete_delete_emoji"];
     /** Edit an emoji by its id. */
     patch: operations["emoji_edit_edit_emoji"];
+  };
+  "/custom/sound/{sound_id}": {
+    /** Fetch a sound by its id. */
+    get: operations["sound_edit_fetch_sound"];
+    /** Create a soundboard sound by its Autumn upload id. */
+    put: operations["sound_create_create_sound"];
+    /** Delete a sound by its id. */
+    delete: operations["sound_edit_delete_sound"];
+    /** Rename a sound or move it to another category. */
+    patch: operations["sound_edit_edit_sound"];
   };
   "/safety/report": {
     /** Report a piece of content to the moderation team. */
@@ -457,6 +536,84 @@ export interface paths {
   "/sync/unreads": {
     /** Fetch information about unread state on channels. */
     get: operations["get_unreads_unreads"];
+  };
+  "/musicbox/agent/heartbeat": {
+    /**
+     * Tells the server an extraction agent is alive and reachable.
+     *
+     * Quando o agente volta depois de sumir, isto remanda o que cada canal acredita estar tocando. Sem esse reencontro, um reinício do agente deixaria o servidor anunciando música sobre o silêncio — e a barra correndo sozinha.
+     */
+    post: operations["agent_heartbeat"];
+  };
+  "/musicbox/agent/commands": {
+    /**
+     * Long-polls for a command. Responds with `null` when there is nothing to do.
+     *
+     * O agente vive atrás de NAT e não aceita conexões, então é ele quem procura o servidor e fica pendurado esperando. Devolver logo "nada a fazer" faria o agente perguntar de novo em seguida, e a busca só sairia no próximo ciclo.
+     *
+     * A resposta é sempre 200 com corpo — `null` quando não há trabalho. Um `Option` nu viraria 404 no Rocket, que é exatamente o código que o agente usa para concluir "esta rota não existe no servidor": ele se desligaria por meio minuto a cada espera vazia.
+     */
+    get: operations["agent_take_work"];
+  };
+  "/musicbox/agent/result": {
+    /** Returns the tracks the agent resolved for a command. */
+    post: operations["agent_hand_in"];
+  };
+  "/musicbox/agent/progress": {
+    /**
+     * The agent tells the server how far along it is, and when a track ended.
+     *
+     * É o que permite a barra andar e a fila seguir sozinha. Sem isso o servidor só saberia que a música acabou quando alguém reclamasse do silêncio.
+     */
+    post: operations["play_progress"];
+  };
+  "/musicbox/{target}/resolve": {
+    /**
+     * Turns a search term, a video link or a playlist link into tracks.
+     *
+     * O trabalho é feito por um agente fora do servidor: o YouTube recusa os IPs desta máquina, então quem extrai é uma conexão residencial.
+     */
+    post: operations["resolve_resolve"];
+  };
+  "/musicbox/agent/token": {
+    /**
+     * Mints a token letting the music agent publish audio into a call.
+     *
+     * O agente roda fora do servidor e não tem conta. Ele não pode assinar o próprio token porque não conhece — nem deve conhecer — a chave do LiveKit.
+     */
+    post: operations["token_agent_token"];
+  };
+  "/musicbox/{target}/queue": {
+    /** The music queue for this channel's call. */
+    get: operations["play_fetch_queue"];
+    /** Adds tracks to the queue, starting playback if nothing is playing. */
+    post: operations["play_enqueue"];
+    /** Empties the queue without stopping what is playing. */
+    delete: operations["play_clear_queue"];
+  };
+  "/musicbox/{target}/queue/{index}": {
+    /** Drops the track at this position in the queue. */
+    delete: operations["play_dequeue"];
+  };
+  "/musicbox/{target}/queue/{index}/play": {
+    /** Plays a queued track right away, putting the current one back in front. */
+    post: operations["play_play_queued"];
+  };
+  "/musicbox/{target}/next": {
+    /** Moves on to the next track. */
+    post: operations["play_next"];
+  };
+  "/musicbox/{target}/toggle": {
+    /** Toggles playback of the current track. */
+    post: operations["play_toggle"];
+  };
+  "/musicbox/{target}/stop": {
+    /** Stops and forgets the queue for this channel. */
+    post: operations["play_stop"];
+  };
+  "/musicbox/{target}/settings": {
+    /** Sets repeat and shuffle for this channel. */
+    patch: operations["play_settings"];
   };
   "/webhooks/{webhook_id}/{token}/{message_id}": {
     /** Deletes a message sent by a webhook */
@@ -591,6 +748,8 @@ export interface components {
        * @description max server emoji
        */
       server_emoji: number;
+      /** Format: int64 */
+      server_sounds: number;
       /**
        * Format: int64
        * @description max server roles
@@ -839,6 +998,12 @@ export interface components {
       | {
           /** @enum {string} */
           type: "TooManyEmoji";
+          /** Format: uint */
+          max: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "TooManySounds";
           /** Format: uint */
           max: number;
         }
@@ -1378,6 +1543,35 @@ export interface components {
            * @description The channel's slowmode delay in seconds
            */
           slowmode?: number | null;
+        }
+      | {
+          /** @enum {string} */
+          channel_type: "ForumChannel";
+          /** @description Unique Id */
+          _id: string;
+          /** @description Id of the server this channel belongs to */
+          server: string;
+          /** @description Display name of the channel */
+          name: string;
+          /** @description Channel description */
+          description?: string | null;
+          /** @description Custom icon attachment */
+          icon?: components["schemas"]["File"] | null;
+          /** @description Default permissions assigned to users in this channel */
+          default_permissions?: components["schemas"]["OverrideField"] | null;
+          /** @description Permissions assigned based on role to this channel */
+          role_permissions?: {
+            [key: string]: components["schemas"]["OverrideField"];
+          };
+          /** @description Whether this channel is marked as not safe for work */
+          nsfw?: boolean;
+          /**
+           * @description Forum specific configuration
+           * @default {
+           *   "default_sort": "Hot"
+           * }
+           */
+          forum?: components["schemas"]["ForumInformation"];
         };
     /** @description Representation of a single permission override as it appears on models and in the database */
     OverrideField: {
@@ -1399,6 +1593,31 @@ export interface components {
        * @description Maximium amount of users allowed in the voice channel at once
        */
       max_users?: number | null;
+    };
+    /** @description Configuration for a forum channel */
+    ForumInformation: {
+      /**
+       * @description How posts are ordered by default
+       * @default Hot
+       */
+      default_sort?: components["schemas"]["ForumSort"];
+      /** @description Tags a post may be labelled with */
+      available_tags?: components["schemas"]["ForumTag"][];
+      /** @description Whether a post must carry at least one tag */
+      require_tag?: boolean;
+      /** @description Id of the most recently created post */
+      last_activity_id?: string | null;
+    };
+    /** @description How forum posts are ordered */
+    ForumSort: "Hot" | "New" | "Top" | "Active";
+    /** @description A tag that can be applied to forum posts */
+    ForumTag: {
+      /** @description Unique Id within the channel */
+      id: string;
+      /** @description Display name */
+      name: string;
+      /** @description Colour, as a CSS colour string */
+      colour?: string | null;
     };
     /** @description Mutual friends, servers, groups and DMs response */
     MutualResponse: {
@@ -1689,6 +1908,231 @@ export interface components {
       /** @description Number of seconds until this invite expires */
       expires?: components["schemas"]["ISO8601 Timestamp"] | null;
     };
+    /**
+     * @description A post in a forum channel
+     *
+     * Unlike a message, a post carries a title and its own vote/comment counters so feeds can be ordered without touching the message stream.
+     */
+    ForumPost: {
+      /** @description Unique Id */
+      _id: string;
+      /** @description Id of the forum channel this post belongs to */
+      channel: string;
+      /** @description Id of the server the channel belongs to */
+      server: string;
+      /** @description Id of the user who created this post */
+      author: string;
+      /** @description Post title */
+      title: string;
+      /** @description Post body, markdown */
+      content?: string | null;
+      /** @description Attached files */
+      attachments?: components["schemas"]["File"][] | null;
+      /** @description Ids of tags applied to this post, from the channel's available tags */
+      tags?: string[];
+      /**
+       * @description Ids of users who upvoted
+       *
+       * Bounded by the size of the instance, which is why it is embedded rather than living in its own collection.
+       */
+      upvoters?: string[];
+      /**
+       * Format: int32
+       * @description Number of upvotes; kept in sync with `upvoters` so feeds can sort
+       * @default 0
+       */
+      score?: number;
+      /**
+       * Format: int32
+       * @description Number of comments
+       * @default 0
+       */
+      comment_count?: number;
+      /**
+       * Format: int32
+       * @description How many distinct people opened this post
+       *
+       * A count, not the list: who read what is nobody else's business.
+       * @default 0
+       */
+      views?: number;
+      /**
+       * @description Ids of users following this post
+       * @default []
+       */
+      subscribers?: string[];
+      /** @description When the most recent comment was posted */
+      last_comment_at?: string | null;
+      /** @description Whether this post is pinned to the top of the feed */
+      pinned?: boolean;
+      /** @description Whether this post is closed to new comments */
+      locked?: boolean;
+      /** @description When this post was last edited */
+      edited?: string | null;
+      /**
+       * @description Id of whoever deleted this post
+       *
+       * Compare against `author` to tell "author deleted" from "moderator removed". A deleted post is kept as a tombstone while it has comments.
+       */
+      deleted_by?: string | null;
+    };
+    /** @description Create a forum post */
+    DataCreateForumPost: {
+      /** @description Post title */
+      title: string;
+      /** @description Post body */
+      content?: string | null;
+      /** @description Ids of attachments */
+      attachments?: string[] | null;
+      /**
+       * @description Tag ids, must exist on the channel
+       * @default []
+       */
+      tags?: string[];
+    };
+    /** @description Response when fetching a forum feed */
+    ForumPostsResponse: {
+      /** @description The posts, in the requested order */
+      posts: components["schemas"]["ForumPost"][];
+      /** @description Authors of the posts */
+      users: components["schemas"]["User"][];
+      /** @description Server members for the authors */
+      members?: components["schemas"]["Member"][] | null;
+    };
+    /** @description Server Member */
+    Member: {
+      /** @description Unique member id */
+      _id: components["schemas"]["MemberCompositeKey"];
+      /** @description Time at which this user joined the server */
+      joined_at: components["schemas"]["ISO8601 Timestamp"];
+      /** @description Member's nickname */
+      nickname?: string | null;
+      /** @description Member's pronouns */
+      pronouns?: string | null;
+      /** @description Avatar attachment */
+      avatar?: components["schemas"]["File"] | null;
+      /** @description Member's roles */
+      roles?: string[];
+      /** @description Timestamp this member is timed out until */
+      timeout?: components["schemas"]["ISO8601 Timestamp"] | null;
+      /** @description Whether the member is server-wide voice muted */
+      can_publish?: boolean;
+      /** @description Whether the member is server-wide voice deafened */
+      can_receive?: boolean;
+    };
+    /** @description Composite primary key consisting of server and user id */
+    MemberCompositeKey: {
+      /** @description Server Id */
+      server: string;
+      /** @description User Id */
+      user: string;
+    };
+    /** @description Edit a forum post */
+    DataEditForumPost: {
+      /** @description Post title */
+      title?: string | null;
+      /** @description Post body */
+      content?: string | null;
+      /** @description Tag ids */
+      tags?: string[] | null;
+      /**
+       * @description Attachment ids to add
+       *
+       * Appends: editing to paste an image must not drop what was already attached.
+       */
+      attachments?: string[] | null;
+      /** @description Whether the post is pinned */
+      pinned?: boolean | null;
+      /** @description Whether the post is locked */
+      locked?: boolean | null;
+      /** @description Fields to remove */
+      remove?: components["schemas"]["FieldsForumPost"][] | null;
+    };
+    /**
+     * @description Fields that can be removed from a forum post
+     * @enum {string}
+     */
+    FieldsForumPost: "Content" | "Attachments";
+    /** @description A comment on a forum post */
+    ForumComment: {
+      /** @description Unique Id */
+      _id: string;
+      /** @description Id of the post this comment belongs to */
+      post: string;
+      /** @description Id of the forum channel */
+      channel: string;
+      /** @description Id of the user who wrote this comment */
+      author: string;
+      /** @description Comment body, markdown */
+      content: string;
+      /** @description Attached files */
+      attachments?: components["schemas"]["File"][] | null;
+      /** @description Id of the comment being replied to */
+      parent?: string | null;
+      /**
+       * @description Ids from the root down to the parent
+       * @default []
+       */
+      ancestors?: string[];
+      /**
+       * @description Ids of users who upvoted
+       * @default []
+       */
+      upvoters?: string[];
+      /**
+       * Format: int32
+       * @description Number of upvotes
+       * @default 0
+       */
+      score?: number;
+      /** @description When this comment was last edited */
+      edited?: string | null;
+      /** @description Id of whoever deleted this comment */
+      deleted_by?: string | null;
+    };
+    /** @description Create a comment on a forum post */
+    DataCreateForumComment: {
+      /** @description Comment body */
+      content: string;
+      /** @description Id of the comment being replied to; omit for a top level comment */
+      parent?: string | null;
+      /** @description Attachment ids */
+      attachments?: string[] | null;
+    };
+    /** @description Response when fetching a comment thread */
+    ForumCommentsResponse: {
+      /** @description Every comment on the post, flat. The client assembles the tree from `ancestors`. */
+      comments: components["schemas"]["ForumComment"][];
+      /** @description Authors of the comments */
+      users: components["schemas"]["User"][];
+      /** @description Server members for the authors */
+      members?: components["schemas"]["Member"][] | null;
+    };
+    /** @description How a comment thread is ordered */
+    ForumCommentSort: "Top" | "Old" | "New";
+    /** @description Edit a forum comment */
+    DataEditForumComment: {
+      /** @description Comment body */
+      content?: string | null;
+      /** @description Attachment ids to add */
+      attachments?: string[] | null;
+      /** @description Fields to remove */
+      remove?: components["schemas"]["FieldsForumComment"][] | null;
+    };
+    /**
+     * @description Fields that can be removed from a forum comment
+     * @enum {string}
+     */
+    FieldsForumComment: "Attachments";
+    /** @description Edit the configuration of a forum channel */
+    DataEditForumChannel: {
+      /** @description Tags a post may carry */
+      available_tags?: components["schemas"]["ForumTag"][] | null;
+      /** @description Default ordering of the feed */
+      default_sort?: components["schemas"]["ForumSort"] | null;
+      /** @description Whether a post must carry at least one tag */
+      require_tag?: boolean | null;
+    };
     /** @description Message */
     Message: {
       /** @description Unique Id */
@@ -1736,34 +2180,6 @@ export interface components {
        * https://docs.rs/revolt-models/latest/revolt_models/v0/enum.MessageFlags.html
        */
       flags?: number;
-    };
-    /** @description Server Member */
-    Member: {
-      /** @description Unique member id */
-      _id: components["schemas"]["MemberCompositeKey"];
-      /** @description Time at which this user joined the server */
-      joined_at: components["schemas"]["ISO8601 Timestamp"];
-      /** @description Member's nickname */
-      nickname?: string | null;
-      /** @description Member's pronouns */
-      pronouns?: string | null;
-      /** @description Avatar attachment */
-      avatar?: components["schemas"]["File"] | null;
-      /** @description Member's roles */
-      roles?: string[];
-      /** @description Timestamp this member is timed out until */
-      timeout?: components["schemas"]["ISO8601 Timestamp"] | null;
-      /** @description Whether the member is server-wide voice muted */
-      can_publish?: boolean;
-      /** @description Whether the member is server-wide voice deafened */
-      can_receive?: boolean;
-    };
-    /** @description Composite primary key consisting of server and user id */
-    MemberCompositeKey: {
-      /** @description Server Id */
-      server: string;
-      /** @description User Id */
-      user: string;
     };
     /** @description Information about the webhook bundled with Message */
     MessageWebhook: {
@@ -2512,7 +2928,7 @@ export interface components {
       voice?: components["schemas"]["VoiceInformation"] | null;
     };
     /** @description Server Channel Type */
-    LegacyServerChannelType: "Text" | "Voice";
+    LegacyServerChannelType: "Text" | "Voice" | "Forum";
     /** @description Response with all members */
     AllMemberResponse: {
       /** @description List of members */
@@ -2687,6 +3103,35 @@ export interface components {
     };
     /** @description Parent Id of the emoji */
     EmojiParent:
+      | {
+          /** @enum {string} */
+          type: "Server";
+          id: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "Detached";
+        };
+    /** @description Soundboard sound */
+    Sound: {
+      /** @description Unique Id */
+      _id: string;
+      /** @description What owns this sound */
+      parent: components["schemas"]["SoundParent"];
+      /** @description Uploader user id */
+      creator_id: string;
+      /** @description Sound name */
+      name: string;
+      /** @description Free-form category, defined by whoever uploads */
+      category?: string | null;
+      /**
+       * Format: uint32
+       * @description Duration in milliseconds
+       */
+      duration?: number | null;
+    };
+    /** @description Parent Id of the sound */
+    SoundParent:
       | {
           /** @enum {string} */
           type: "Server";
@@ -2895,6 +3340,8 @@ export interface components {
       voice?: components["schemas"]["VoiceInformation"] | null;
       /** Format: uint64 */
       slowmode?: number | null;
+      /** @description Forum specific configuration */
+      forum?: components["schemas"]["ForumInformation"] | null;
     };
     PartialMember: {
       id?: components["schemas"]["MemberCompositeKey"] | null;
@@ -3029,6 +3476,31 @@ export interface components {
     DataEditEmoji: {
       /** @description Emoji name */
       name?: string | null;
+    };
+    /** @description Create a new sound */
+    DataCreateSound: {
+      /**
+       * @description Sound name
+       *
+       * Unlike emoji this is free text: a sound is picked by reading it in a list, not typed inline in a message, so there is no reason to restrict it to an identifier-like shape.
+       */
+      name: string;
+      /** @description Parent information */
+      parent: components["schemas"]["SoundParent"];
+      /** @description Category to file it under */
+      category?: string | null;
+      /**
+       * Format: uint32
+       * @description Duration in milliseconds, as measured by the uploader
+       */
+      duration?: number | null;
+    };
+    /** @description Edit sound information */
+    DataEditSound: {
+      /** @description Sound name */
+      name?: string | null;
+      /** @description Category to file it under */
+      category?: string | null;
     };
     /** Report Data */
     DataReportContent: {
@@ -3299,6 +3771,140 @@ export interface components {
       channel: string;
       /** @description User Id */
       user: string;
+    };
+    /**
+     * @description Trabalho entregue ao agente.
+     *
+     * `kind` diz o que fazer. Um enum seria mais bonito, mas o agente é escrito noutra linguagem e a serialização em texto simples é o que menos surpreende dos dois lados.
+     */
+    Command: {
+      id: string;
+      /** @description `resolve`, `play` ou `stop` */
+      kind: string;
+      /**
+       * @description Nome para buscar, ou URL de vídeo ou playlist. Vazio em `stop`.
+       * @default
+       */
+      query?: string;
+      /**
+       * Format: uint16
+       * @default 0
+       */
+      limit?: number;
+      /**
+       * @description Canal onde tocar; só em `play` e `stop`
+       * @default null
+       */
+      channel_id?: string | null;
+      /**
+       * @description Faixa a tocar; só em `play`
+       * @default null
+       */
+      track?: components["schemas"]["Track"] | null;
+    };
+    /**
+     * @description Uma faixa resolvida pelo agente.
+     *
+     * Espelha o formato que o agente devolve. Fica declarado aqui, e não em `revolt_models`, porque nada disso é persistido: é um recado de ida e volta entre o navegador e a máquina que extrai.
+     */
+    Track: {
+      id: string;
+      provider: string;
+      title: string;
+      author?: string | null;
+      /**
+       * Format: uint32
+       * @description Duração em segundos; nulo em transmissão ao vivo
+       */
+      duration_s?: number | null;
+      cover_url?: string | null;
+      page_url: string;
+    };
+    /** @description O que o agente devolve depois de trabalhar. */
+    CommandResult: {
+      id: string;
+      /** @default [] */
+      tracks?: components["schemas"]["Track"][];
+      /**
+       * @description Preenchido quando o agente não conseguiu
+       * @default null
+       */
+      error?: string | null;
+      /**
+       * @description Motivo legível por máquina: bloqueado, nao_encontrado, ...
+       * @default null
+       */
+      reason?: string | null;
+    };
+    DataProgress: {
+      channel_id: string;
+      /** Format: uint32 */
+      position_s: number;
+      /**
+       * @description A faixa chegou ao fim sozinha
+       * @default false
+       */
+      finished?: boolean;
+    };
+    ResolveResponse: {
+      tracks: components["schemas"]["Track"][];
+    };
+    DataResolve: {
+      /** @description Nome para buscar, ou endereço de vídeo ou playlist */
+      query: string;
+      /**
+       * Format: uint16
+       * @description Teto de faixas devolvidas
+       */
+      limit?: number | null;
+    };
+    AgentTokenResponse: {
+      token: string;
+      /** @description Endereço do LiveKit que o agente deve usar */
+      url: string;
+    };
+    DataAgentToken: {
+      /** @description Canal cuja chamada o agente vai entrar */
+      channel_id: string;
+    };
+    /**
+     * @description O que a chamada de um canal está tocando.
+     *
+     * Vive no servidor, e não no navegador de quem pediu, porque é estado **da chamada**: quem entra depois precisa ver a mesma fila, e fechar a aba não pode apagar o que os outros estão ouvindo.
+     */
+    ChannelQueue: {
+      playing: boolean;
+      current?: components["schemas"]["Track"] | null;
+      /**
+       * Format: uint32
+       * @description Segundos já tocados da faixa atual
+       */
+      position_s: number;
+      queue: components["schemas"]["Track"][];
+      repeat: components["schemas"]["Repeat"];
+      shuffle: boolean;
+      /**
+       * @description Identidade do agente na sala de voz.
+       *
+       * O cliente precisa disto para ajustar o volume da música: o áudio chega como faixa de um participante, e o volume por participante é indexado pela identidade. Sem este campo o navegador teria de adivinhar qual dos presentes é o MusicBox.
+       *
+       * Preenchido só na leitura, porque depende da configuração e não do estado da fila.
+       * @default null
+       */
+      bot_identity?: string | null;
+    };
+    /**
+     * @description Como a repetição se comporta ao terminar uma faixa.
+     * @enum {string}
+     */
+    Repeat: "off" | "one" | "all";
+    DataEnqueue: {
+      /** @description Faixas a acrescentar, na ordem */
+      tracks: components["schemas"]["Track"][];
+    };
+    DataSettings: {
+      repeat?: components["schemas"]["Repeat"] | null;
+      shuffle?: boolean | null;
     };
     /** @description New webhook information */
     DataEditWebhook: {
@@ -4033,6 +4639,420 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["DataCreateInvite"];
+      };
+    };
+  };
+  /** Fetch a page of posts from a forum channel. */
+  forum_post_query_query_forum_posts: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+      query: {
+        /** How to order the feed; defaults to the channel's configured sort */
+        sort?: components["schemas"]["ForumSort"] | null;
+        /** Only return posts carrying this tag */
+        tag?: string | null;
+        /** Maximum number of posts to return */
+        limit?: number | null;
+        /** Return posts that come after this one in the current ordering */
+        after?: string | null;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPostsResponse"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Create a new post in a forum channel. */
+  forum_post_create_create_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataCreateForumPost"];
+      };
+    };
+  };
+  /** Fetch a single post by id. */
+  forum_post_fetch_fetch_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Delete a post. The author may delete their own; anyone else needs `ManageMessages`. */
+  forum_post_edit_delete_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /**
+   * Edit a post, or moderate it by pinning / locking.
+   *
+   * Editing the body requires being the author. Pinning and locking require `ManageMessages`.
+   */
+  forum_post_edit_edit_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataEditForumPost"];
+      };
+    };
+  };
+  /** Add the current user's upvote. Idempotent: voting twice is a no-op. */
+  forum_post_vote_upvote_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Withdraw the current user's upvote. Idempotent. */
+  forum_post_vote_remove_forum_post_upvote: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Fetch every comment on a post, flat. The client assembles the tree. */
+  forum_comment_create_query_forum_comments: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+      query: {
+        /** How to order the thread */
+        sort?: components["schemas"]["ForumCommentSort"] | null;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumCommentsResponse"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Comment on a post, optionally replying to another comment. */
+  forum_comment_create_create_forum_comment: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumComment"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataCreateForumComment"];
+      };
+    };
+  };
+  /**
+   * Delete a comment. The author may delete their own; anyone else needs `ManageMessages`.
+   *
+   * A comment that has replies is tombstoned rather than removed, so the subtree below it is not orphaned.
+   */
+  forum_comment_edit_delete_forum_comment: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        comment: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Edit a comment. Only the author may change the body. */
+  forum_comment_edit_edit_forum_comment: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        comment: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumComment"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataEditForumComment"];
+      };
+    };
+  };
+  forum_comment_edit_upvote_forum_comment: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        comment: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumComment"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  forum_comment_edit_remove_forum_comment_upvote: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        comment: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumComment"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /**
+   * Configure the tags a forum offers, its default ordering, and whether a post must carry a tag.
+   *
+   * Kept off `PATCH /channels/<id>` so the generic channel edit does not have to know about forum-only fields.
+   */
+  forum_settings_edit_forum_settings: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Channel"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataEditForumChannel"];
+      };
+    };
+  };
+  /**
+   * Tell everyone in the channel that a sound is playing.
+   *
+   * The audio itself travels as a LiveKit track published by the player; this only carries the "who played what" label. It cannot go over LiveKit because the token sets `can_publish_data = false` and voice-ingress disconnects any participant that publishes data.
+   */
+  sound_play_play_sound: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        sound: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Follow a post to keep track of it. */
+  forum_post_subscribe_subscribe_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  forum_post_subscribe_unsubscribe_forum_post: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        post: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ForumPost"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
       };
     };
   };
@@ -5144,6 +6164,27 @@ export interface operations {
       };
     };
   };
+  /** Fetch all soundboard sounds on a server. */
+  sound_list_list_sounds: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"][];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
   /** Edit's server role's ranks. */
   roles_edit_positions_edit_role_ranks: {
     parameters: {
@@ -5430,6 +6471,97 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["DataEditEmoji"];
+      };
+    };
+  };
+  /** Fetch a sound by its id. */
+  sound_edit_fetch_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Create a soundboard sound by its Autumn upload id. */
+  sound_create_create_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataCreateSound"];
+      };
+    };
+  };
+  /** Delete a sound by its id. */
+  sound_edit_delete_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Rename a sound or move it to another category. */
+  sound_edit_edit_sound: {
+    parameters: {
+      path: {
+        sound_id: string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Sound"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataEditSound"];
       };
     };
   };
@@ -6023,6 +7155,368 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["Error"];
         };
+      };
+    };
+  };
+  /**
+   * Tells the server an extraction agent is alive and reachable.
+   *
+   * Quando o agente volta depois de sumir, isto remanda o que cada canal acredita estar tocando. Sem esse reencontro, um reinício do agente deixaria o servidor anunciando música sobre o silêncio — e a barra correndo sozinha.
+   */
+  agent_heartbeat: {
+    parameters: {
+      header: {
+        /** Shared secret proving this is the music agent. */
+        "X-MusicBox-Secret": string;
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /**
+   * Long-polls for a command. Responds with `null` when there is nothing to do.
+   *
+   * O agente vive atrás de NAT e não aceita conexões, então é ele quem procura o servidor e fica pendurado esperando. Devolver logo "nada a fazer" faria o agente perguntar de novo em seguida, e a busca só sairia no próximo ciclo.
+   *
+   * A resposta é sempre 200 com corpo — `null` quando não há trabalho. Um `Option` nu viraria 404 no Rocket, que é exatamente o código que o agente usa para concluir "esta rota não existe no servidor": ele se desligaria por meio minuto a cada espera vazia.
+   */
+  agent_take_work: {
+    parameters: {
+      header: {
+        /** Shared secret proving this is the music agent. */
+        "X-MusicBox-Secret": string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["Command"] | null;
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Returns the tracks the agent resolved for a command. */
+  agent_hand_in: {
+    parameters: {
+      header: {
+        /** Shared secret proving this is the music agent. */
+        "X-MusicBox-Secret": string;
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CommandResult"];
+      };
+    };
+  };
+  /**
+   * The agent tells the server how far along it is, and when a track ended.
+   *
+   * É o que permite a barra andar e a fila seguir sozinha. Sem isso o servidor só saberia que a música acabou quando alguém reclamasse do silêncio.
+   */
+  play_progress: {
+    parameters: {
+      header: {
+        /** Shared secret proving this is the music agent. */
+        "X-MusicBox-Secret": string;
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataProgress"];
+      };
+    };
+  };
+  /**
+   * Turns a search term, a video link or a playlist link into tracks.
+   *
+   * O trabalho é feito por um agente fora do servidor: o YouTube recusa os IPs desta máquina, então quem extrai é uma conexão residencial.
+   */
+  resolve_resolve: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ResolveResponse"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataResolve"];
+      };
+    };
+  };
+  /**
+   * Mints a token letting the music agent publish audio into a call.
+   *
+   * O agente roda fora do servidor e não tem conta. Ele não pode assinar o próprio token porque não conhece — nem deve conhecer — a chave do LiveKit.
+   */
+  token_agent_token: {
+    parameters: {
+      header: {
+        /** Shared secret proving this is the music agent. */
+        "X-MusicBox-Secret": string;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentTokenResponse"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataAgentToken"];
+      };
+    };
+  };
+  /** The music queue for this channel's call. */
+  play_fetch_queue: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Adds tracks to the queue, starting playback if nothing is playing. */
+  play_enqueue: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataEnqueue"];
+      };
+    };
+  };
+  /** Empties the queue without stopping what is playing. */
+  play_clear_queue: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Drops the track at this position in the queue. */
+  play_dequeue: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        index: number;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Plays a queued track right away, putting the current one back in front. */
+  play_play_queued: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+        index: number;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Moves on to the next track. */
+  play_next: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Toggles playback of the current track. */
+  play_toggle: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Stops and forgets the queue for this channel. */
+  play_stop: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      /** Success */
+      204: never;
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  /** Sets repeat and shuffle for this channel. */
+  play_settings: {
+    parameters: {
+      path: {
+        target: components["schemas"]["Id"];
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChannelQueue"];
+        };
+      };
+      /** An error occurred. */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DataSettings"];
       };
     };
   };
