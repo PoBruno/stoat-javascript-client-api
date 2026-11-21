@@ -13,7 +13,7 @@
       "name": "AGPLv3",
       "url": "https://github.com/stoatchat/stoatchat/blob/main/crates/delta/LICENSE"
     },
-    "version": "0.15.1"
+    "version": "0.16.0"
   },
   "servers": [
     {
@@ -842,6 +842,23 @@
             "schema": {
               "$ref": "#/components/schemas/Id"
             }
+          },
+          {
+            "name": "permissions",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "X-Audit-Log-Reason",
+            "in": "header",
+            "description": "Reason for action which is stored in the audit log.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -957,6 +974,12 @@
         "security": [
           {
             "Session Token": []
+          },
+          {
+            "Session Token": []
+          },
+          {
+            "Valid MFA Ticket": []
           }
         ]
       },
@@ -1044,6 +1067,129 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/bots/{bot_id}/discover": {
+      "get": {
+        "tags": [
+          "Discover"
+        ],
+        "summary": "Get Discover request status",
+        "description": "Fetches the status of your Discover request. If it has been approved or denied, the reason will be provided (if applicable). This endpoint is ONLY USEFUL in production on stoat.chat/app .",
+        "operationId": "discover_discover_get_bot_discover_get_bot",
+        "parameters": [
+          {
+            "name": "bot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverRequest"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Discover"
+        ],
+        "summary": "Add bot to Discover",
+        "description": "This puts your bot into the Discover request queue. This endpoint is ONLY USEFUL in production on stoat.chat/app .",
+        "operationId": "discover_discover_add_bot_discover_add_bot",
+        "parameters": [
+          {
+            "name": "bot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Discover"
+        ],
+        "summary": "Delete Discover request",
+        "description": "This cannot be used if your request is no longer in the queue (ie approved or rejected). If you wish to reapply after a rejection, submit another POST. This endpoint is ONLY USEFUL in production on stoat.chat/app .",
+        "operationId": "discover_discover_remove_bot_discover_remove_bot",
+        "parameters": [
+          {
+            "name": "bot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
           }
         },
         "security": [
@@ -1343,6 +1489,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataCreateInvite"
+              }
+            }
+          }
+        },
         "responses": {
           "default": {
             "description": "An error occurred.",
@@ -1360,982 +1515,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Invite"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/posts": {
-      "get": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Fetch Forum Posts",
-        "description": "Fetch a page of posts from a forum channel.",
-        "operationId": "forum_post_query_query_forum_posts",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "How to order the feed; defaults to the channel's configured sort",
-            "schema": {
-              "description": "How to order the feed; defaults to the channel's configured sort",
-              "$ref": "#/components/schemas/ForumSort",
-              "nullable": true
-            }
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "description": "Only return posts carrying this tag",
-            "schema": {
-              "description": "Only return posts carrying this tag",
-              "type": "string",
-              "nullable": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Maximum number of posts to return",
-            "schema": {
-              "description": "Maximum number of posts to return",
-              "type": "integer",
-              "format": "int64",
-              "maximum": 100.0,
-              "minimum": 1.0,
-              "nullable": true
-            }
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "description": "Return posts that come after this one in the current ordering",
-            "schema": {
-              "description": "Return posts that come after this one in the current ordering",
-              "type": "string",
-              "maxLength": 26,
-              "minLength": 26,
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPostsResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Create Forum Post",
-        "description": "Create a new post in a forum channel.",
-        "operationId": "forum_post_create_create_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataCreateForumPost"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/posts/{post}": {
-      "get": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Fetch Forum Post",
-        "description": "Fetch a single post by id.",
-        "operationId": "forum_post_fetch_fetch_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Delete Forum Post",
-        "description": "Delete a post. The author may delete their own; anyone else needs `ManageMessages`.",
-        "operationId": "forum_post_edit_delete_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Success"
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Edit Forum Post",
-        "description": "Edit a post, or moderate it by pinning / locking.\n\nEditing the body requires being the author. Pinning and locking require `ManageMessages`.",
-        "operationId": "forum_post_edit_edit_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataEditForumPost"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/posts/{post}/upvote": {
-      "put": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Upvote Forum Post",
-        "description": "Add the current user's upvote. Idempotent: voting twice is a no-op.",
-        "operationId": "forum_post_vote_upvote_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Remove Forum Post Upvote",
-        "description": "Withdraw the current user's upvote. Idempotent.",
-        "operationId": "forum_post_vote_remove_forum_post_upvote",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/posts/{post}/comments": {
-      "get": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Fetch Forum Comments",
-        "description": "Fetch every comment on a post, flat. The client assembles the tree.",
-        "operationId": "forum_comment_create_query_forum_comments",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "How to order the thread",
-            "schema": {
-              "description": "How to order the thread",
-              "$ref": "#/components/schemas/ForumCommentSort",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumCommentsResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Create Forum Comment",
-        "description": "Comment on a post, optionally replying to another comment.",
-        "operationId": "forum_comment_create_create_forum_comment",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataCreateForumComment"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumComment"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/comments/{comment}": {
-      "delete": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Delete Forum Comment",
-        "description": "Delete a comment. The author may delete their own; anyone else needs `ManageMessages`.\n\nA comment that has replies is tombstoned rather than removed, so the subtree below it is not orphaned.",
-        "operationId": "forum_comment_edit_delete_forum_comment",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "comment",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Success"
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Edit Forum Comment",
-        "description": "Edit a comment. Only the author may change the body.",
-        "operationId": "forum_comment_edit_edit_forum_comment",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "comment",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataEditForumComment"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumComment"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/comments/{comment}/upvote": {
-      "put": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Upvote Forum Comment",
-        "operationId": "forum_comment_edit_upvote_forum_comment",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "comment",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumComment"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Remove Forum Comment Upvote",
-        "operationId": "forum_comment_edit_remove_forum_comment_upvote",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "comment",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumComment"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/forum": {
-      "patch": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Edit Forum Settings",
-        "description": "Configure the tags a forum offers, its default ordering, and whether a post must carry a tag.\n\nKept off `PATCH /channels/<id>` so the generic channel edit does not have to know about forum-only fields.",
-        "operationId": "forum_settings_edit_forum_settings",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataEditForumChannel"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Channel"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/sounds/{sound}/play": {
-      "post": {
-        "tags": [
-          "Soundboard"
-        ],
-        "summary": "Announce Soundboard Play",
-        "description": "Tell everyone in the channel that a sound is playing.\n\nThe audio itself travels as a LiveKit track published by the player; this only carries the \"who played what\" label. It cannot go over LiveKit because the token sets `can_publish_data = false` and voice-ingress disconnects any participant that publishes data.",
-        "operationId": "sound_play_play_sound",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "sound",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Success"
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
-    "/channels/{target}/posts/{post}/subscribe": {
-      "put": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Follow Forum Post",
-        "description": "Follow a post to keep track of it.",
-        "operationId": "forum_post_subscribe_subscribe_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Forum"
-        ],
-        "summary": "Unfollow Forum Post",
-        "operationId": "forum_post_subscribe_unsubscribe_forum_post",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          },
-          {
-            "name": "post",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForumPost"
                 }
               }
             }
@@ -3747,6 +2926,12 @@
         "security": [
           {
             "Session Token": []
+          },
+          {
+            "Session Token": []
+          },
+          {
+            "Valid MFA Ticket": []
           }
         ]
       },
@@ -4891,56 +4076,6 @@
         ]
       }
     },
-    "/servers/{target}/sounds": {
-      "get": {
-        "tags": [
-          "Server Customisation"
-        ],
-        "summary": "Fetch Server Sounds",
-        "description": "Fetch all soundboard sounds on a server.",
-        "operationId": "sound_list_list_sounds",
-        "parameters": [
-          {
-            "name": "target",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Id"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Sound"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
     "/servers/{target}/roles/ranks": {
       "patch": {
         "tags": [
@@ -5118,6 +4253,129 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      }
+    },
+    "/servers/{server}/discover": {
+      "get": {
+        "tags": [
+          "Discover"
+        ],
+        "summary": "Get Discover request status",
+        "description": "Fetches the status of your Discover request. If it has been approved or denied, the reason will be provided (if applicable). This endpoint is ONLY USEFUL in production on stoat.chat/app .",
+        "operationId": "discover_discover_get_discover_get",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverRequest"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Discover"
+        ],
+        "summary": "Add server to Discover",
+        "description": "This puts your server into the Discover request queue. This endpoint is ONLY USEFUL in production on stoat.chat/app .",
+        "operationId": "discover_discover_add_discover_add",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
+          }
+        },
+        "security": [
+          {
+            "Session Token": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Discover"
+        ],
+        "summary": "Delete Discover request",
+        "description": "This cannot be used if your request is no longer in the queue (ie approved or rejected). If you wish to reapply after a rejection, submit another POST. This endpoint is ONLY USEFUL in production on stoat.chat/app .",
+        "operationId": "discover_discover_remove_discover_remove",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "An error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Success"
           }
         },
         "security": [
@@ -5474,196 +4732,6 @@
         ]
       }
     },
-    "/custom/sound/{sound_id}": {
-      "get": {
-        "tags": [
-          "Soundboard"
-        ],
-        "summary": "Fetch Sound",
-        "description": "Fetch a sound by its id.",
-        "operationId": "sound_edit_fetch_sound",
-        "parameters": [
-          {
-            "name": "sound_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Sound"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Soundboard"
-        ],
-        "summary": "Create New Sound",
-        "description": "Create a soundboard sound by its Autumn upload id.",
-        "operationId": "sound_create_create_sound",
-        "parameters": [
-          {
-            "name": "sound_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataCreateSound"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Sound"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Soundboard"
-        ],
-        "summary": "Delete Sound",
-        "description": "Delete a sound by its id.",
-        "operationId": "sound_edit_delete_sound",
-        "parameters": [
-          {
-            "name": "sound_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Success"
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "Soundboard"
-        ],
-        "summary": "Edit Sound",
-        "description": "Rename a sound or move it to another category.",
-        "operationId": "sound_edit_edit_sound",
-        "parameters": [
-          {
-            "name": "sound_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DataEditSound"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "default": {
-            "description": "An error occurred.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Sound"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Session Token": []
-          }
-        ]
-      }
-    },
     "/safety/report": {
       "post": {
         "tags": [
@@ -5832,10 +4900,10 @@
         },
         "security": [
           {
-            "Valid MFA Ticket": []
+            "Session Token": []
           },
           {
-            "Session Token": []
+            "Valid MFA Ticket": []
           }
         ]
       }
@@ -5902,10 +4970,10 @@
         },
         "security": [
           {
-            "Valid MFA Ticket": []
+            "Session Token": []
           },
           {
-            "Session Token": []
+            "Valid MFA Ticket": []
           }
         ]
       }
@@ -7559,19 +6627,22 @@
         "type": "object",
         "required": [
           "app",
-          "build",
           "features",
           "revolt",
+          "stoat",
           "vapid",
           "ws"
         ],
         "properties": {
+          "stoat": {
+            "description": "Stoat API Version",
+            "type": "string"
+          },
           "revolt": {
-            "description": "Revolt API Version",
             "type": "string"
           },
           "features": {
-            "description": "Features enabled on this Revolt node",
+            "description": "Features enabled on this Stoat node",
             "allOf": [
               {
                 "$ref": "#/components/schemas/RevoltFeatures"
@@ -7589,14 +6660,6 @@
           "vapid": {
             "description": "Web Push VAPID public key",
             "type": "string"
-          },
-          "build": {
-            "description": "Build information",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/BuildInformation"
-              }
-            ]
           }
         }
       },
@@ -7604,6 +6667,7 @@
         "title": "Feature Configuration",
         "type": "object",
         "required": [
+          "assets",
           "autumn",
           "captcha",
           "email",
@@ -7669,6 +6733,10 @@
                 "$ref": "#/components/schemas/LegalLinks"
               }
             ]
+          },
+          "assets": {
+            "description": "Asset link",
+            "type": "string"
           }
         }
       },
@@ -7796,6 +6864,7 @@
         "required": [
           "body_limit_size",
           "group_size",
+          "max_invite_duration_days",
           "message_embeds",
           "message_reactions",
           "message_replies",
@@ -7803,8 +6872,7 @@
           "restrict_server_creation",
           "server_channels",
           "server_emoji",
-          "server_roles",
-          "server_sounds"
+          "server_roles"
         ],
         "properties": {
           "group_size": {
@@ -7832,10 +6900,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "server_sounds": {
-            "type": "integer",
-            "format": "int64"
-          },
           "server_roles": {
             "description": "max server roles",
             "type": "integer",
@@ -7859,6 +6923,11 @@
           },
           "new_user_hours": {
             "description": "New user hours",
+            "type": "integer",
+            "format": "int64"
+          },
+          "max_invite_duration_days": {
+            "description": "Number of days after creation before an invite expires",
             "type": "integer",
             "format": "int64"
           }
@@ -7967,39 +7036,6 @@
           }
         }
       },
-      "BuildInformation": {
-        "title": "Build Information",
-        "type": "object",
-        "required": [
-          "commit_sha",
-          "commit_timestamp",
-          "origin_url",
-          "semver",
-          "timestamp"
-        ],
-        "properties": {
-          "commit_sha": {
-            "description": "Commit Hash",
-            "type": "string"
-          },
-          "commit_timestamp": {
-            "description": "Commit Timestamp",
-            "type": "string"
-          },
-          "semver": {
-            "description": "Git Semver",
-            "type": "string"
-          },
-          "origin_url": {
-            "description": "Git Origin URL",
-            "type": "string"
-          },
-          "timestamp": {
-            "description": "Build Timestamp",
-            "type": "string"
-          }
-        }
-      },
       "Error": {
         "title": "Error",
         "description": "Error information",
@@ -8017,6 +7053,28 @@
                 "enum": [
                   "LabelMe"
                 ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "locale",
+              "msg",
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ContactSupport"
+                ]
+              },
+              "locale": {
+                "type": "string"
+              },
+              "msg": {
+                "type": "string"
               }
             }
           },
@@ -8588,26 +7646,6 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "TooManySounds"
-                ]
-              },
-              "max": {
-                "type": "integer",
-                "format": "uint",
-                "minimum": 0.0
-              }
-            }
-          },
-          {
-            "type": "object",
-            "required": [
-              "max",
-              "type"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
                   "TooManyRoles"
                 ]
               },
@@ -8818,6 +7856,20 @@
                 "type": "string",
                 "enum": [
                   "IsElevated"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "CannotRemoveOwnChannelView"
                 ]
               }
             }
@@ -9203,6 +8255,20 @@
               "type": {
                 "type": "string",
                 "enum": [
+                  "ImageResolutionNotAllowed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
                   "NoEmbedData"
                 ]
               }
@@ -9451,13 +8517,11 @@
             }
           }
         ],
-        "required": [
-          "location"
-        ],
         "properties": {
           "location": {
             "description": "Where this error occurred",
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -10285,81 +9349,6 @@
                 "nullable": true
               }
             }
-          },
-          {
-            "description": "Forum channel belonging to a server\n\nUnlike a text channel this has no message stream: content lives in `forum_posts` / `forum_comments`.",
-            "type": "object",
-            "required": [
-              "_id",
-              "channel_type",
-              "name",
-              "server"
-            ],
-            "properties": {
-              "channel_type": {
-                "type": "string",
-                "enum": [
-                  "ForumChannel"
-                ]
-              },
-              "_id": {
-                "description": "Unique Id",
-                "type": "string"
-              },
-              "server": {
-                "description": "Id of the server this channel belongs to",
-                "type": "string"
-              },
-              "name": {
-                "description": "Display name of the channel",
-                "type": "string"
-              },
-              "description": {
-                "description": "Channel description",
-                "type": "string",
-                "nullable": true
-              },
-              "icon": {
-                "description": "Custom icon attachment",
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/File"
-                  }
-                ],
-                "nullable": true
-              },
-              "default_permissions": {
-                "description": "Default permissions assigned to users in this channel",
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/OverrideField"
-                  }
-                ],
-                "nullable": true
-              },
-              "role_permissions": {
-                "description": "Permissions assigned based on role to this channel",
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/OverrideField"
-                }
-              },
-              "nsfw": {
-                "description": "Whether this channel is marked as not safe for work",
-                "type": "boolean"
-              },
-              "forum": {
-                "description": "Forum specific configuration",
-                "default": {
-                  "default_sort": "Hot"
-                },
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/ForumInformation"
-                  }
-                ]
-              }
-            }
           }
         ]
       },
@@ -10392,93 +9381,6 @@
             "type": "integer",
             "format": "uint",
             "minimum": 1.0,
-            "nullable": true
-          }
-        }
-      },
-      "ForumInformation": {
-        "description": "Configuration for a forum channel",
-        "type": "object",
-        "properties": {
-          "default_sort": {
-            "description": "How posts are ordered by default",
-            "default": "Hot",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ForumSort"
-              }
-            ]
-          },
-          "available_tags": {
-            "description": "Tags a post may be labelled with",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ForumTag"
-            }
-          },
-          "require_tag": {
-            "description": "Whether a post must carry at least one tag",
-            "type": "boolean"
-          },
-          "last_activity_id": {
-            "description": "Id of the most recently created post",
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "ForumSort": {
-        "description": "How forum posts are ordered",
-        "oneOf": [
-          {
-            "description": "Score decayed by age",
-            "type": "string",
-            "enum": [
-              "Hot"
-            ]
-          },
-          {
-            "description": "Most recently created",
-            "type": "string",
-            "enum": [
-              "New"
-            ]
-          },
-          {
-            "description": "Highest score",
-            "type": "string",
-            "enum": [
-              "Top"
-            ]
-          },
-          {
-            "description": "Most recently commented on",
-            "type": "string",
-            "enum": [
-              "Active"
-            ]
-          }
-        ]
-      },
-      "ForumTag": {
-        "description": "A tag that can be applied to forum posts",
-        "type": "object",
-        "required": [
-          "id",
-          "name"
-        ],
-        "properties": {
-          "id": {
-            "description": "Unique Id within the channel",
-            "type": "string"
-          },
-          "name": {
-            "description": "Display name",
-            "type": "string"
-          },
-          "colour": {
-            "description": "Colour, as a CSS colour string",
-            "type": "string",
             "nullable": true
           }
         }
@@ -10557,6 +9459,12 @@
           "public": {
             "description": "Whether the bot is public (may be invited by anyone)",
             "type": "boolean"
+          },
+          "default_permissions": {
+            "description": "The permissions the bot will ask to have upon being invited to a server,",
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           },
           "analytics": {
             "description": "Whether to enable analytics",
@@ -10656,6 +9564,20 @@
           "description": {
             "description": "Profile Description",
             "type": "string"
+          },
+          "privacy_policy_url": {
+            "description": "URL for privacy policy",
+            "type": "string"
+          },
+          "terms_of_service_url": {
+            "description": "URL for terms of service",
+            "type": "string"
+          },
+          "default_permissions": {
+            "description": "Permissions the bot will ask for",
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           }
         }
       },
@@ -10710,6 +9632,12 @@
           "public": {
             "description": "Whether the bot is public (may be invited by anyone)",
             "type": "boolean"
+          },
+          "default_permissions": {
+            "description": "The permissions the bot will ask to have upon being invited to a server,",
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           },
           "analytics": {
             "description": "Whether to enable analytics",
@@ -10780,6 +9708,12 @@
             "type": "boolean",
             "nullable": true
           },
+          "default_permissions": {
+            "description": "The permissions the bot will ask to have upon being invited to a server,",
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
           "analytics": {
             "description": "Whether analytics should be gathered for this bot\n\nMust be enabled in order to show up on [Revolt Discover](https://rvlt.gg).",
             "type": "boolean",
@@ -10808,6 +9742,94 @@
         "enum": [
           "Token",
           "InteractionsURL"
+        ]
+      },
+      "DiscoverRequest": {
+        "description": "Discover request",
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "description": "The type of request.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiscoverRequestType"
+              }
+            ]
+          },
+          "id": {
+            "description": "The ID of the bot/server",
+            "type": "string"
+          },
+          "status": {
+            "description": "status of the request",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiscoverRequestStatus"
+              }
+            ]
+          }
+        }
+      },
+      "DiscoverRequestType": {
+        "type": "string",
+        "enum": [
+          "Bot",
+          "Server"
+        ]
+      },
+      "DiscoverRequestStatus": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "UnderReview"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "Removed"
+            ],
+            "properties": {
+              "Removed": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "Denied"
+            ],
+            "properties": {
+              "Denied": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "Approved"
+            ],
+            "properties": {
+              "Approved": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
         ]
       },
       "DataEditChannel": {
@@ -10899,7 +9921,8 @@
               "channel",
               "creator",
               "server",
-              "type"
+              "type",
+              "uses"
             ],
             "properties": {
               "type": {
@@ -10923,6 +9946,28 @@
               "channel": {
                 "description": "Id of the server channel this invite points to",
                 "type": "string"
+              },
+              "max_uses": {
+                "description": "Maximum number of times this invite can be used",
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0,
+                "nullable": true
+              },
+              "uses": {
+                "description": "Number of times this invite has been used",
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "expires": {
+                "description": "Timestamp at which this invite expires",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ISO8601 Timestamp"
+                  }
+                ],
+                "nullable": true
               }
             }
           },
@@ -10933,7 +9978,8 @@
               "_id",
               "channel",
               "creator",
-              "type"
+              "type",
+              "uses"
             ],
             "properties": {
               "type": {
@@ -10953,276 +9999,32 @@
               "channel": {
                 "description": "Id of the group channel this invite points to",
                 "type": "string"
+              },
+              "max_uses": {
+                "description": "Maximum number of times this invite can be used",
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0,
+                "nullable": true
+              },
+              "uses": {
+                "description": "Number of times this invite has been used",
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "expires": {
+                "description": "Timestamp at which this invite expires",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ISO8601 Timestamp"
+                  }
+                ],
+                "nullable": true
               }
             }
           }
         ]
-      },
-      "ForumPost": {
-        "description": "A post in a forum channel\n\nUnlike a message, a post carries a title and its own vote/comment counters so feeds can be ordered without touching the message stream.",
-        "type": "object",
-        "required": [
-          "_id",
-          "author",
-          "channel",
-          "server",
-          "title"
-        ],
-        "properties": {
-          "_id": {
-            "description": "Unique Id",
-            "type": "string"
-          },
-          "channel": {
-            "description": "Id of the forum channel this post belongs to",
-            "type": "string"
-          },
-          "server": {
-            "description": "Id of the server the channel belongs to",
-            "type": "string"
-          },
-          "author": {
-            "description": "Id of the user who created this post",
-            "type": "string"
-          },
-          "title": {
-            "description": "Post title",
-            "type": "string"
-          },
-          "content": {
-            "description": "Post body, markdown",
-            "type": "string",
-            "nullable": true
-          },
-          "attachments": {
-            "description": "Attached files",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/File"
-            },
-            "nullable": true
-          },
-          "tags": {
-            "description": "Ids of tags applied to this post, from the channel's available tags",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "upvoters": {
-            "description": "Ids of users who upvoted\n\nBounded by the size of the instance, which is why it is embedded rather than living in its own collection.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "score": {
-            "description": "Number of upvotes; kept in sync with `upvoters` so feeds can sort",
-            "default": 0,
-            "type": "integer",
-            "format": "int32"
-          },
-          "comment_count": {
-            "description": "Number of comments",
-            "default": 0,
-            "type": "integer",
-            "format": "int32"
-          },
-          "views": {
-            "description": "How many distinct people opened this post\n\nA count, not the list: who read what is nobody else's business.",
-            "default": 0,
-            "type": "integer",
-            "format": "int32"
-          },
-          "subscribers": {
-            "description": "Ids of users following this post",
-            "default": [],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "last_comment_at": {
-            "description": "When the most recent comment was posted",
-            "type": "string",
-            "nullable": true
-          },
-          "pinned": {
-            "description": "Whether this post is pinned to the top of the feed",
-            "type": "boolean"
-          },
-          "locked": {
-            "description": "Whether this post is closed to new comments",
-            "type": "boolean"
-          },
-          "edited": {
-            "description": "When this post was last edited",
-            "type": "string",
-            "nullable": true
-          },
-          "deleted_by": {
-            "description": "Id of whoever deleted this post\n\nCompare against `author` to tell \"author deleted\" from \"moderator removed\". A deleted post is kept as a tombstone while it has comments.",
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "DataCreateForumPost": {
-        "description": "Create a forum post",
-        "type": "object",
-        "required": [
-          "title"
-        ],
-        "properties": {
-          "title": {
-            "description": "Post title",
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 1
-          },
-          "content": {
-            "description": "Post body",
-            "type": "string",
-            "maxLength": 8000,
-            "minLength": 0,
-            "nullable": true
-          },
-          "attachments": {
-            "description": "Ids of attachments",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "tags": {
-            "description": "Tag ids, must exist on the channel",
-            "default": [],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "ForumPostsResponse": {
-        "description": "Response when fetching a forum feed",
-        "type": "object",
-        "required": [
-          "posts",
-          "users"
-        ],
-        "properties": {
-          "posts": {
-            "description": "The posts, in the requested order",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ForumPost"
-            }
-          },
-          "users": {
-            "description": "Authors of the posts",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/User"
-            }
-          },
-          "members": {
-            "description": "Server members for the authors",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Member"
-            },
-            "nullable": true
-          }
-        }
-      },
-      "Member": {
-        "description": "Server Member",
-        "type": "object",
-        "required": [
-          "_id",
-          "joined_at"
-        ],
-        "properties": {
-          "_id": {
-            "description": "Unique member id",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MemberCompositeKey"
-              }
-            ]
-          },
-          "joined_at": {
-            "description": "Time at which this user joined the server",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ISO8601 Timestamp"
-              }
-            ]
-          },
-          "nickname": {
-            "description": "Member's nickname",
-            "type": "string",
-            "nullable": true
-          },
-          "pronouns": {
-            "description": "Member's pronouns",
-            "type": "string",
-            "nullable": true
-          },
-          "avatar": {
-            "description": "Avatar attachment",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/File"
-              }
-            ],
-            "nullable": true
-          },
-          "roles": {
-            "description": "Member's roles",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "timeout": {
-            "description": "Timestamp this member is timed out until",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ISO8601 Timestamp"
-              }
-            ],
-            "nullable": true
-          },
-          "can_publish": {
-            "description": "Whether the member is server-wide voice muted",
-            "type": "boolean"
-          },
-          "can_receive": {
-            "description": "Whether the member is server-wide voice deafened",
-            "type": "boolean"
-          }
-        }
-      },
-      "MemberCompositeKey": {
-        "description": "Composite primary key consisting of server and user id",
-        "type": "object",
-        "required": [
-          "server",
-          "user"
-        ],
-        "properties": {
-          "server": {
-            "description": "Server Id",
-            "type": "string"
-          },
-          "user": {
-            "description": "User Id",
-            "type": "string"
-          }
-        }
       },
       "ISO8601 Timestamp": {
         "description": "ISO8601 formatted timestamp",
@@ -11230,295 +10032,25 @@
         "format": "date-time",
         "example": "1970-01-01T00:00:00Z"
       },
-      "DataEditForumPost": {
-        "description": "Edit a forum post",
+      "DataCreateInvite": {
+        "description": "Create Invite",
         "type": "object",
         "properties": {
-          "title": {
-            "description": "Post title",
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 1,
-            "nullable": true
-          },
-          "content": {
-            "description": "Post body",
-            "type": "string",
-            "maxLength": 8000,
-            "minLength": 0,
-            "nullable": true
-          },
-          "tags": {
-            "description": "Tag ids",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "attachments": {
-            "description": "Attachment ids to add\n\nAppends: editing to paste an image must not drop what was already attached.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "pinned": {
-            "description": "Whether the post is pinned",
-            "type": "boolean",
-            "nullable": true
-          },
-          "locked": {
-            "description": "Whether the post is locked",
-            "type": "boolean",
-            "nullable": true
-          },
-          "remove": {
-            "description": "Fields to remove",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FieldsForumPost"
-            },
-            "nullable": true
-          }
-        }
-      },
-      "FieldsForumPost": {
-        "description": "Fields that can be removed from a forum post",
-        "type": "string",
-        "enum": [
-          "Content",
-          "Attachments"
-        ]
-      },
-      "ForumComment": {
-        "description": "A comment on a forum post",
-        "type": "object",
-        "required": [
-          "_id",
-          "author",
-          "channel",
-          "content",
-          "post"
-        ],
-        "properties": {
-          "_id": {
-            "description": "Unique Id",
-            "type": "string"
-          },
-          "post": {
-            "description": "Id of the post this comment belongs to",
-            "type": "string"
-          },
-          "channel": {
-            "description": "Id of the forum channel",
-            "type": "string"
-          },
-          "author": {
-            "description": "Id of the user who wrote this comment",
-            "type": "string"
-          },
-          "content": {
-            "description": "Comment body, markdown",
-            "type": "string"
-          },
-          "attachments": {
-            "description": "Attached files",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/File"
-            },
-            "nullable": true
-          },
-          "parent": {
-            "description": "Id of the comment being replied to",
-            "type": "string",
-            "nullable": true
-          },
-          "ancestors": {
-            "description": "Ids from the root down to the parent",
-            "default": [],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "upvoters": {
-            "description": "Ids of users who upvoted",
-            "default": [],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "score": {
-            "description": "Number of upvotes",
-            "default": 0,
+          "max_uses": {
+            "description": "Maximum number of times this invite can be used",
             "type": "integer",
-            "format": "int32"
-          },
-          "edited": {
-            "description": "When this comment was last edited",
-            "type": "string",
+            "format": "uint64",
+            "maximum": 100.0,
+            "minimum": 1.0,
             "nullable": true
           },
-          "deleted_by": {
-            "description": "Id of whoever deleted this comment",
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "DataCreateForumComment": {
-        "description": "Create a comment on a forum post",
-        "type": "object",
-        "required": [
-          "content"
-        ],
-        "properties": {
-          "content": {
-            "description": "Comment body",
-            "type": "string",
-            "maxLength": 8000,
-            "minLength": 1
-          },
-          "parent": {
-            "description": "Id of the comment being replied to; omit for a top level comment",
-            "type": "string",
-            "maxLength": 26,
-            "minLength": 26,
-            "nullable": true
-          },
-          "attachments": {
-            "description": "Attachment ids",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          }
-        }
-      },
-      "ForumCommentsResponse": {
-        "description": "Response when fetching a comment thread",
-        "type": "object",
-        "required": [
-          "comments",
-          "users"
-        ],
-        "properties": {
-          "comments": {
-            "description": "Every comment on the post, flat. The client assembles the tree from `ancestors`.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ForumComment"
-            }
-          },
-          "users": {
-            "description": "Authors of the comments",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/User"
-            }
-          },
-          "members": {
-            "description": "Server members for the authors",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Member"
-            },
-            "nullable": true
-          }
-        }
-      },
-      "ForumCommentSort": {
-        "description": "How a comment thread is ordered",
-        "oneOf": [
-          {
-            "description": "Highest score first",
-            "type": "string",
-            "enum": [
-              "Top"
-            ]
-          },
-          {
-            "description": "Oldest first",
-            "type": "string",
-            "enum": [
-              "Old"
-            ]
-          },
-          {
-            "description": "Newest first",
-            "type": "string",
-            "enum": [
-              "New"
-            ]
-          }
-        ]
-      },
-      "DataEditForumComment": {
-        "description": "Edit a forum comment",
-        "type": "object",
-        "properties": {
-          "content": {
-            "description": "Comment body",
-            "type": "string",
-            "maxLength": 8000,
-            "minLength": 1,
-            "nullable": true
-          },
-          "attachments": {
-            "description": "Attachment ids to add",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "remove": {
-            "description": "Fields to remove",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FieldsForumComment"
-            },
-            "nullable": true
-          }
-        }
-      },
-      "FieldsForumComment": {
-        "description": "Fields that can be removed from a forum comment",
-        "type": "string",
-        "enum": [
-          "Attachments"
-        ]
-      },
-      "DataEditForumChannel": {
-        "description": "Edit the configuration of a forum channel",
-        "type": "object",
-        "properties": {
-          "available_tags": {
-            "description": "Tags a post may carry",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ForumTag"
-            },
-            "maxItems": 32,
-            "nullable": true
-          },
-          "default_sort": {
-            "description": "Default ordering of the feed",
+          "expires": {
+            "description": "Number of seconds until this invite expires",
             "allOf": [
               {
-                "$ref": "#/components/schemas/ForumSort"
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
               }
             ],
-            "nullable": true
-          },
-          "require_tag": {
-            "description": "Whether a post must carry at least one tag",
-            "type": "boolean",
             "nullable": true
           }
         }
@@ -11677,6 +10209,93 @@
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
+          }
+        }
+      },
+      "Member": {
+        "description": "Server Member",
+        "type": "object",
+        "required": [
+          "_id",
+          "joined_at"
+        ],
+        "properties": {
+          "_id": {
+            "description": "Unique member id",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberCompositeKey"
+              }
+            ]
+          },
+          "joined_at": {
+            "description": "Time at which this user joined the server",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
+              }
+            ]
+          },
+          "nickname": {
+            "description": "Member's nickname",
+            "type": "string",
+            "nullable": true
+          },
+          "pronouns": {
+            "description": "Member's pronouns",
+            "type": "string",
+            "nullable": true
+          },
+          "avatar": {
+            "description": "Avatar attachment",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/File"
+              }
+            ],
+            "nullable": true
+          },
+          "roles": {
+            "description": "Member's roles",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "description": "Timestamp this member is timed out until",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
+              }
+            ],
+            "nullable": true
+          },
+          "can_publish": {
+            "description": "Whether the member is server-wide voice muted",
+            "type": "boolean"
+          },
+          "can_receive": {
+            "description": "Whether the member is server-wide voice deafened",
+            "type": "boolean"
+          }
+        }
+      },
+      "MemberCompositeKey": {
+        "description": "Composite primary key consisting of server and user id",
+        "type": "object",
+        "required": [
+          "server",
+          "user"
+        ],
+        "properties": {
+          "server": {
+            "description": "Server Id",
+            "type": "string"
+          },
+          "user": {
+            "description": "User Id",
+            "type": "string"
           }
         }
       },
@@ -12318,6 +10937,95 @@
             }
           },
           {
+            "description": "X/Twitter post",
+            "type": "object",
+            "required": [
+              "author_handle",
+              "author_name",
+              "author_url",
+              "created_timestamp",
+              "id",
+              "likes",
+              "replies",
+              "reposts",
+              "text",
+              "type",
+              "views"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "XApp"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "author_name": {
+                "type": "string"
+              },
+              "author_handle": {
+                "type": "string"
+              },
+              "author_url": {
+                "type": "string"
+              },
+              "author_avatar_url": {
+                "type": "string",
+                "nullable": true
+              },
+              "created_timestamp": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              },
+              "quote_id": {
+                "type": "string",
+                "nullable": true
+              },
+              "quote_text": {
+                "type": "string",
+                "nullable": true
+              },
+              "quote_author_handle": {
+                "type": "string",
+                "nullable": true
+              },
+              "quote_author_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "quote_author_url": {
+                "type": "string",
+                "nullable": true
+              },
+              "replies": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              },
+              "reposts": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              },
+              "likes": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              },
+              "views": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              }
+            }
+          },
+          {
             "description": "Spotify track",
             "type": "object",
             "required": [
@@ -12416,6 +11124,25 @@
               },
               "id": {
                 "type": "string"
+              }
+            }
+          },
+          {
+            "description": "Gifbox",
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "Gifbox"
+                ]
+              },
+              "poster_url": {
+                "type": "string",
+                "nullable": true
               }
             }
           }
@@ -13336,6 +12063,11 @@
               }
             ],
             "nullable": true
+          },
+          "owner": {
+            "description": "Id of the bot that owns this role, if it is a managed role",
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -13630,13 +12362,6 @@
             "type": "string",
             "enum": [
               "Voice"
-            ]
-          },
-          {
-            "description": "Forum Channel",
-            "type": "string",
-            "enum": [
-              "Forum"
             ]
           }
         ]
@@ -14065,87 +12790,6 @@
       },
       "EmojiParent": {
         "description": "Parent Id of the emoji",
-        "oneOf": [
-          {
-            "type": "object",
-            "required": [
-              "id",
-              "type"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "Server"
-                ]
-              },
-              "id": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "type": "object",
-            "required": [
-              "type"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "Detached"
-                ]
-              }
-            }
-          }
-        ]
-      },
-      "Sound": {
-        "description": "Soundboard sound",
-        "type": "object",
-        "required": [
-          "_id",
-          "creator_id",
-          "name",
-          "parent"
-        ],
-        "properties": {
-          "_id": {
-            "description": "Unique Id",
-            "type": "string"
-          },
-          "parent": {
-            "description": "What owns this sound",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SoundParent"
-              }
-            ]
-          },
-          "creator_id": {
-            "description": "Uploader user id",
-            "type": "string"
-          },
-          "name": {
-            "description": "Sound name",
-            "type": "string"
-          },
-          "category": {
-            "description": "Free-form category, defined by whoever uploads",
-            "type": "string",
-            "nullable": true
-          },
-          "duration": {
-            "description": "Duration in milliseconds",
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0.0,
-            "nullable": true
-          }
-        }
-      },
-      "SoundParent": {
-        "description": "Parent Id of the sound",
         "oneOf": [
           {
             "type": "object",
@@ -14904,15 +13548,6 @@
             "format": "uint64",
             "minimum": 0.0,
             "nullable": true
-          },
-          "forum": {
-            "description": "Forum specific configuration",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ForumInformation"
-              }
-            ],
-            "nullable": true
           }
         }
       },
@@ -15109,6 +13744,10 @@
                 "$ref": "#/components/schemas/File"
               }
             ],
+            "nullable": true
+          },
+          "owner": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -15373,64 +14012,6 @@
             "maxLength": 32,
             "minLength": 1,
             "pattern": "^[a-z0-9_]+$",
-            "nullable": true
-          }
-        }
-      },
-      "DataCreateSound": {
-        "description": "Create a new sound",
-        "type": "object",
-        "required": [
-          "name",
-          "parent"
-        ],
-        "properties": {
-          "name": {
-            "description": "Sound name\n\nUnlike emoji this is free text: a sound is picked by reading it in a list, not typed inline in a message, so there is no reason to restrict it to an identifier-like shape.",
-            "type": "string",
-            "maxLength": 32,
-            "minLength": 1
-          },
-          "parent": {
-            "description": "Parent information",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SoundParent"
-              }
-            ]
-          },
-          "category": {
-            "description": "Category to file it under",
-            "type": "string",
-            "maxLength": 32,
-            "minLength": 1,
-            "nullable": true
-          },
-          "duration": {
-            "description": "Duration in milliseconds, as measured by the uploader",
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0.0,
-            "nullable": true
-          }
-        }
-      },
-      "DataEditSound": {
-        "description": "Edit sound information",
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "Sound name",
-            "type": "string",
-            "maxLength": 32,
-            "minLength": 1,
-            "nullable": true
-          },
-          "category": {
-            "description": "Category to file it under",
-            "type": "string",
-            "maxLength": 32,
-            "minLength": 1,
             "nullable": true
           }
         }
@@ -16437,7 +15018,6 @@
         "Channel Invites",
         "Channel Permissions",
         "Messaging",
-        "Forum",
         "Interactions",
         "Groups",
         "Voice",
